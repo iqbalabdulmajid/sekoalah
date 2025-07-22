@@ -1,10 +1,11 @@
-require('dotenv').config();
+require('dotenv').config(); // harus paling atas sebelum akses process.env
 
 const express = require('express');
 const cors = require('cors');
-const db = require('./db'); 
+const db = require('./db'); // Impor untuk cek koneksi saat start
 
-// 1. Impor semua rute (sudah benar)
+
+// 1. Impor semua rute di satu tempat
 const userRoutes = require('./routes/gurus');
 const authRoutes = require('./routes/auth');
 const qrCodeRoutes = require('./routes/qrcode');
@@ -14,18 +15,13 @@ const aktivitasRoutes = require('./routes/aktivitas');
 const laporanRoutes = require('./routes/laporan');
 
 const app = express();
-
-// ✅ PERBAIKAN: Gunakan port dari environment, atau 5000 jika tidak ada
 const port = process.env.PORT || 5000;
 
 // Middleware
-// ✅ PRAKTIK TERBAIK: Batasi CORS hanya untuk domain frontend Anda di produksi
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000' 
-}));
+app.use(cors());
 app.use(express.json());
 
-// 2. Gunakan semua rute (sudah benar)
+// 2. Gunakan semua rute
 app.use('/api/gurus', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/qrcode', qrCodeRoutes);
@@ -34,17 +30,14 @@ app.use('/api/presensi', presensiRoutes);
 app.use('/api/aktivitas', aktivitasRoutes);
 app.use('/api/laporan', laporanRoutes);
 
-// Rute default (sudah benar)
+// Rute default
 app.get('/', (req, res) => {
   res.send('Selamat datang di API Sistem Presensi!');
 });
 
-// Jalankan server (sudah benar)
+// Jalankan server
 app.listen(port, () => {
-  // ✅ Sedikit perbaikan pada log agar lebih jelas
-  console.log(`Server berjalan di port ${port}`);
+  console.log(`Server berjalan di http://localhost:${port}`);
 });
-
-// ❌ HAPUS INI DI PRODUKSI: Jangan pernah menampilkan password di log
-// console.log("DB_PASSWORD type:", typeof process.env.DB_PASSWORD);
-// console.log("DB_PASSWORD value:", process.env.DB_PASSWORD);
+console.log("DB_PASSWORD type:", typeof process.env.DB_PASSWORD);
+console.log("DB_PASSWORD value:", process.env.DB_PASSWORD);
