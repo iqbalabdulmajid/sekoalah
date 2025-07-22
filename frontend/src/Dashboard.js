@@ -37,7 +37,7 @@ import {
   IconButton,
   DialogActions,
   Menu,
-  MenuItem
+  MenuItem,
 } from "@mui/material";
 
 // Import Ikon
@@ -393,7 +393,7 @@ const QrScannerModal = ({
 };
 
 const QuickStats = ({ jadwal, isPresent, currentTime, onStatusChange }) => {
-  const currentSchedule = jadwal.find(j => {
+  const currentSchedule = jadwal.find((j) => {
     const startTime = new Date(j.waktu_mulai);
     const endTime = new Date(j.waktu_selesai);
     return currentTime >= startTime && currentTime < endTime;
@@ -411,14 +411,50 @@ const QuickStats = ({ jadwal, isPresent, currentTime, onStatusChange }) => {
   return (
     <ModernCard>
       <CardContent sx={{ p: 3 }}>
-        <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: '#333', display: 'flex', alignItems: 'center', gap: 1 }}><AssignmentIcon color="primary" /> Info Cepat</Typography>
-        <List sx={{ p: 0, '& .MuiListItem-root': { px: 0 } }}>
-          <ListItem><ListItemIcon><AccessTimeIcon color="primary" /></ListItemIcon><ListItemText primary="Waktu Sekarang" secondary={currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} /></ListItem>
-          <Divider component="li" />
-          <ListItem><ListItemIcon><SchoolIcon color={currentSchedule ? "success" : "action"} /></ListItemIcon><ListItemText primary="Kelas Berlangsung" secondary={currentSchedule ? currentSchedule.mata_pelajaran : "Tidak ada"} /></ListItem>
+        <Typography
+          variant="h6"
+          sx={{
+            mb: 2,
+            fontWeight: "bold",
+            color: "#333",
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+          }}
+        >
+          <AssignmentIcon color="primary" /> Info Cepat
+        </Typography>
+        <List sx={{ p: 0, "& .MuiListItem-root": { px: 0 } }}>
+          <ListItem>
+            <ListItemIcon>
+              <AccessTimeIcon color="primary" />
+            </ListItemIcon>
+            <ListItemText
+              primary="Waktu Sekarang"
+              secondary={currentTime.toLocaleTimeString("id-ID", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              })}
+            />
+          </ListItem>
           <Divider component="li" />
           <ListItem>
-            <ListItemIcon><EventAvailableIcon color={isPresent ? "success" : "warning"} /></ListItemIcon>
+            <ListItemIcon>
+              <SchoolIcon color={currentSchedule ? "success" : "action"} />
+            </ListItemIcon>
+            <ListItemText
+              primary="Kelas Berlangsung"
+              secondary={
+                currentSchedule ? currentSchedule.mata_pelajaran : "Tidak ada"
+              }
+            />
+          </ListItem>
+          <Divider component="li" />
+          <ListItem>
+            <ListItemIcon>
+              <EventAvailableIcon color={isPresent ? "success" : "warning"} />
+            </ListItemIcon>
             <ListItemText primary="Status Kehadiran" />
             <Chip
               label={isPresent ? "Sudah Tercatat" : "Belum Hadir"}
@@ -427,9 +463,17 @@ const QuickStats = ({ jadwal, isPresent, currentTime, onStatusChange }) => {
               onClick={handleChipClick}
               style={{ cursor: "pointer" }}
             />
-            <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-              <MenuItem onClick={() => handleStatusSelect("Izin")}>Izin</MenuItem>
-              <MenuItem onClick={() => handleStatusSelect("Sakit")}>Sakit</MenuItem>
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleMenuClose}
+            >
+              <MenuItem onClick={() => handleStatusSelect("Izin")}>
+                Izin
+              </MenuItem>
+              <MenuItem onClick={() => handleStatusSelect("Sakit")}>
+                Sakit
+              </MenuItem>
             </Menu>
           </ListItem>
         </List>
@@ -582,23 +626,30 @@ function Dashboard() {
   };
 
   const fetchInitialData = useCallback(async () => {
-    if (!token) return;
-    setLoading(true);
-    try {
-      const headers = { headers: { Authorization: `Bearer ${token}` } };
-      const [jadwalRes, presensiRes] = await Promise.all([
-        axios.get("http://localhost:5000/api/jadwal/saya", headers),
-        axios.get("http://localhost:5000/api/presensi/status", headers),
-      ]);
-      setJadwal(jadwalRes.data);
-      setIsPresent(presensiRes.data.isPresent);
-    } catch (error) {
-      console.error("Gagal mengambil data awal:", error);
-      setMessage("Gagal memuat data. Periksa koneksi Anda.");
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
+  if (!token) return;
+  setLoading(true);
+  
+  // ✅ Definisikan URL API secara dinamis
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+  try {
+    const headers = { headers: { Authorization: `Bearer ${token}` } };
+    
+    // ✅ Gunakan variabel API_URL di kedua panggilan
+    const [jadwalRes, presensiRes] = await Promise.all([
+      axios.get(`${API_URL}/api/jadwal/saya`, headers),
+      axios.get(`${API_URL}/api/presensi/status`, headers),
+    ]);
+    
+    setJadwal(jadwalRes.data);
+    setIsPresent(presensiRes.data.isPresent);
+  } catch (error) {
+    console.error("Gagal mengambil data awal:", error);
+    setMessage("Gagal memuat data. Periksa koneksi Anda.");
+  } finally {
+    setLoading(false);
+  }
+}, [token]); // Dependency array sudah benar
 
   useEffect(() => {
     if (token) {
@@ -608,34 +659,38 @@ function Dashboard() {
   }, [token, fetchInitialData]);
 
   const handleScanResult = useCallback(
-    (scannedData) => {
-      setIsModalOpen(false);
+  async (scannedData) => { // ✅ Jadikan fungsi ini async
+    setIsModalOpen(false);
 
-      // Langsung kirim data mentah hasil scan (yang merupakan token JWT) ke server
-      axios
-        .post(
-          "http://localhost:5000/api/presensi/scan",
-          { qrData: scannedData }, // Kirim dengan key 'qrData' sesuai ekspektasi backend
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-        .then((response) => {
-          // Jika sukses
-          setMessage(response.data.message);
-          alert(response.data.message);
-          setIsPresent(true);
-        })
-        .catch((err) => {
-          // Jika gagal (misal: token kedaluwarsa, sudah presensi, dll)
-          const errorMessage =
-            err.response?.data?.message || "Gagal melakukan presensi.";
-          setMessage(errorMessage);
-          alert(errorMessage);
-          if (err.response?.status === 409) setIsPresent(true); // 409 = Conflict (sudah absen)
-        });
-    },
-    [token]
-  );
-  
+    // ✅ Definisikan URL API secara dinamis
+    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+    // ✅ Gunakan try...catch untuk penanganan error yang lebih bersih
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/presensi/scan`, // ✅ Gunakan variabel API_URL
+        { qrData: scannedData },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Logika sukses di dalam try
+      setMessage(response.data.message);
+      alert(response.data.message);
+      setIsPresent(true);
+
+    } catch (err) {
+      // Logika error di dalam catch
+      const errorMessage =
+        err.response?.data?.message || "Gagal melakukan presensi.";
+      setMessage(errorMessage);
+      alert(errorMessage);
+      if (err.response?.status === 409) {
+        setIsPresent(true); // 409 = Conflict (sudah absen)
+      }
+    }
+  },
+  [token] // Dependency array sudah benar
+);
 
   // useEffect untuk scanner tidak berubah
   useEffect(() => {
@@ -647,18 +702,22 @@ function Dashboard() {
       // Cleanup
     };
   }, [isModalOpen, handleScanResult]);
-  
 
   const handleAction = async (action, payload) => {
+    // ✅ Definisikan URL API secara dinamis
+    const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
     const endpoints = {
       mulai: {
         method: "post",
-        url: "http://localhost:5000/api/aktivitas/mulai",
+        // ✅ Gunakan variabel API_URL
+        url: `${API_URL}/api/aktivitas/mulai`,
         data: { jadwal_id: payload },
       },
       selesai: {
         method: "put",
-        url: `http://localhost:5000/api/aktivitas/selesai/${payload}`,
+        // ✅ Gunakan variabel API_URL
+        url: `${API_URL}/api/aktivitas/selesai/${payload}`,
         data: {},
       },
     };
@@ -679,7 +738,7 @@ function Dashboard() {
         headers: { Authorization: `Bearer ${token}` },
       });
       alert(messages[action].success);
-      fetchInitialData();
+      fetchInitialData(); // Refresh data
     } catch (error) {
       alert(messages[action].fail);
       console.error(error);
@@ -687,17 +746,23 @@ function Dashboard() {
   };
   // Fungsi BARU untuk menangani perubahan status manual
   const handleManualPresence = async (status) => {
-    try {
-      const response = await axios.post('http://localhost:5000/api/presensi/manual', 
-        { status }, 
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      alert(response.data.message);
-      fetchInitialData(); // Ambil ulang data untuk memperbarui dasbor
-    } catch (error) {
-      alert(error.response?.data?.error || "Gagal memperbarui status.");
-    }
-  };
+  try {
+    // ✅ Definisikan URL API secara dinamis
+    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    
+    // ✅ Gunakan variabel API_URL saat memanggil axios
+    const response = await axios.post(
+      `${API_URL}/api/presensi/manual`,
+      { status },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    
+    alert(response.data.message);
+    fetchInitialData(); // Ambil ulang data untuk memperbarui dasbor
+  } catch (error) {
+    alert(error.response?.data?.error || "Gagal memperbarui status.");
+  }
+};
   const handleLogout = () => {
     localStorage.removeItem("token");
     window.location.href = "/login";
@@ -840,136 +905,135 @@ function Dashboard() {
           </Grid>
 
           {/* --- Baris Ketiga: Jadwal Full Lebar --- */}
-            <Container maxWidth="xl" sx={{ py: 3 }}>
-              <Card
-                elevation={3}
+          <Container maxWidth="xl" sx={{ py: 3 }}>
+            <Card
+              elevation={3}
+              sx={{
+                borderRadius: "20px",
+                background: "rgba(255, 255, 255, 0.95)",
+                backdropFilter: "blur(10px)",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                width: "95%",
+                boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.1)",
+                p: { xs: 2, sm: 4 },
+              }}
+            >
+              <Typography
+                variant="h5"
+                component="h2"
                 sx={{
-                  borderRadius: "20px",
-                  background: "rgba(255, 255, 255, 0.95)",
-                  backdropFilter: "blur(10px)",
-                  border: "1px solid rgba(255, 255, 255, 0.2)",
-                  width: "95%",
-                  boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.1)",
-                  p: { xs: 2, sm: 4 },
+                  mb: 3,
+                  fontWeight: "bold",
+                  color: "#333",
+                  textAlign: "center",
                 }}
               >
-                <Typography
-                  variant="h5"
-                  component="h2"
-                  sx={{
-                    mb: 3,
-                    fontWeight: "bold",
-                    color: "#333",
-                    textAlign: "center",
-                  }}
-                >
-                  Jadwal Mengajar Hari Ini
-                </Typography>
+                Jadwal Mengajar Hari Ini
+              </Typography>
 
-                <TableContainer
-                  component={Paper}
-                  elevation={0}
-                  sx={{
-                    borderRadius: "16px",
-                    border: "1px solid rgba(0,0,0,0.05)",
-                  }}
-                >
-                  <Table>
-                    <TableHead>
-                      <TableRow
-                        sx={{
-                          background:
-                            "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                        }}
+              <TableContainer
+                component={Paper}
+                elevation={0}
+                sx={{
+                  borderRadius: "16px",
+                  border: "1px solid rgba(0,0,0,0.05)",
+                }}
+              >
+                <Table>
+                  <TableHead>
+                    <TableRow
+                      sx={{
+                        background:
+                          "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                      }}
+                    >
+                      <TableCell
+                        sx={{ color: "black", fontWeight: "bold", py: 2 }}
                       >
-                        <TableCell
-                          sx={{ color: "black", fontWeight: "bold", py: 2 }}
-                        >
-                          Mata Pelajaran
-                        </TableCell>
-                        <TableCell
-                          sx={{ color: "black", fontWeight: "bold", py: 2 }}
-                        >
-                          Waktu
-                        </TableCell>
-                        <TableCell
-                          align="center"
-                          sx={{ color: "black", fontWeight: "bold", py: 2 }}
-                        >
-                          Aksi
+                        Mata Pelajaran
+                      </TableCell>
+                      <TableCell
+                        sx={{ color: "black", fontWeight: "bold", py: 2 }}
+                      >
+                        Waktu
+                      </TableCell>
+                      <TableCell
+                        align="center"
+                        sx={{ color: "black", fontWeight: "bold", py: 2 }}
+                      >
+                        Aksi
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {loading ? (
+                      <TableRow>
+                        <TableCell colSpan={3} align="center" sx={{ py: 5 }}>
+                          <CircularProgress />
                         </TableCell>
                       </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {loading ? (
-                        <TableRow>
-                          <TableCell colSpan={3} align="center" sx={{ py: 5 }}>
-                            <CircularProgress />
+                    ) : jadwal.length > 0 ? (
+                      jadwal.map((item) => (
+                        <TableRow key={item.id} hover>
+                          <TableCell sx={{ fontWeight: 500 }}>
+                            {item.mata_pelajaran}
                           </TableCell>
-                        </TableRow>
-                      ) : jadwal.length > 0 ? (
-                        jadwal.map((item) => (
-                          <TableRow key={item.id} hover>
-                            <TableCell sx={{ fontWeight: 500 }}>
-                              {item.mata_pelajaran}
-                            </TableCell>
-                            <TableCell>
-                              {`${new Date(item.waktu_mulai).toLocaleTimeString(
-                                "id-ID",
-                                {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                }
-                              )} - ${new Date(
-                                item.waktu_selesai
-                              ).toLocaleTimeString("id-ID", {
+                          <TableCell>
+                            {`${new Date(item.waktu_mulai).toLocaleTimeString(
+                              "id-ID",
+                              {
                                 hour: "2-digit",
                                 minute: "2-digit",
-                              })}`}
-                            </TableCell>
-                            <TableCell align="center">
-                              {item.status === "selesai" ? (
-                                <Chip
-                                  label="Selesai"
-                                  color="success"
-                                  variant="filled"
-                                  sx={{ fontWeight: "bold" }}
-                                />
-                              ) : item.status === "berlangsung" ? (
-                                <Button
-                                  variant="contained"
-                                  color="error"
-                                  onClick={() =>
-                                    handleAction("selesai", item.aktivitasId)
-                                  }
-                                >
-                                  Selesai
-                                </Button>
-                              ) : (
-                                <Button
-                                  variant="contained"
-                                  color="primary"
-                                  onClick={() => handleAction("mulai", item.id)}
-                                >
-                                  Mulai
-                                </Button>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={3} align="center" sx={{ py: 5 }}>
-                            Tidak ada jadwal mengajar hari ini.
+                              }
+                            )} - ${new Date(
+                              item.waktu_selesai
+                            ).toLocaleTimeString("id-ID", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}`}
+                          </TableCell>
+                          <TableCell align="center">
+                            {item.status === "selesai" ? (
+                              <Chip
+                                label="Selesai"
+                                color="success"
+                                variant="filled"
+                                sx={{ fontWeight: "bold" }}
+                              />
+                            ) : item.status === "berlangsung" ? (
+                              <Button
+                                variant="contained"
+                                color="error"
+                                onClick={() =>
+                                  handleAction("selesai", item.aktivitasId)
+                                }
+                              >
+                                Selesai
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={() => handleAction("mulai", item.id)}
+                              >
+                                Mulai
+                              </Button>
+                            )}
                           </TableCell>
                         </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Card>
-            </Container>
-         
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={3} align="center" sx={{ py: 5 }}>
+                          Tidak ada jadwal mengajar hari ini.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Card>
+          </Container>
         </Stack>
       </Container>
 
