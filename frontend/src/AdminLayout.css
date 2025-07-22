@@ -1,0 +1,240 @@
+/* -- Import Font Mirip SB Admin (Nunito) -- */
+/* (Tambahkan baris @import ini di file index.css Anda) */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
+
+/* -- ROOT VARIABLES INSPIRED BY SB ADMIN -- */
+:root {
+  --primary-blue: #4e73df;
+  --primary-blue-hover: #2e59d9;
+  --success-green: #1cc88a;
+  --info-cyan: #36b9cc;
+  --warning-yellow: #f6c23e;
+  --danger-red: #e74a3b;
+  --admin-bg: #f8f9fc; /* Latar belakang abu-abu terang */
+  --sidebar-bg: #4e73df; /* Menggunakan warna primer SB Admin */
+  --sidebar-text: rgba(255, 255, 255, 0.8);
+  --sidebar-link-hover: #2e59d9;
+  --sidebar-active-text: #ffffff;
+  --main-content-text: #5a5c69;
+  --card-bg: #ffffff;
+  --card-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+  --card-header-bg: #f8f9fc;
+  --card-header-text: var(--primary-blue);
+  --border-color: #e3e6f0;
+  --topbar-bg: #ffffff;
+}
+
+/* --- Global Reset & Font --- */
+body {
+  margin: 0; /* Menghilangkan margin/jarak default dari body */
+  font-family: 'Nunito', sans-serif;
+  background-color: var(--admin-bg);
+}
+
+/* --- MAIN LAYOUT & RESPONSIVENESS --- */
+.admin-dashboard {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main-container {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  width: 100%;
+}
+
+.main-content {
+  flex-grow: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+/* --- SIDEBAR STYLES --- */
+.sidebar {
+  width: 240px;
+  background-color: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1000;
+}
+
+.sidebar-header {
+  padding: 1.5rem 1rem;
+  text-align: center;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+.sidebar-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  margin-top: 1rem;
+}
+
+.sidebar-nav a {
+  color: var(--sidebar-text);
+  text-decoration: none;
+  padding: 1rem 1.5rem;
+  display: block;
+  transition: background-color 0.2s, color 0.2s;
+  font-size: 0.95rem;
+  border-left: 3px solid transparent;
+}
+
+.sidebar-nav a:hover {
+  background-color: var(--sidebar-link-hover);
+  color: #fff;
+}
+
+/* Efek baru untuk link aktif agar lebih jelas */
+.sidebar-nav a.active {
+  background-color: var(--sidebar-link-hover);
+  color: var(--sidebar-active-text);
+  font-weight: 700;
+  border-left: 3px solid #fff;
+}
+
+/* --- TOPBAR / NAVBAR --- */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 70px;
+  padding: 0 1.5rem;
+  background-color: var(--topbar-bg);
+  box-shadow: var(--card-shadow);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-toggle {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #858796;
+}
+
+/* ... Kode Topbar Nav & Dropdown tetap sama ... */
+.topbar-nav { list-style: none; margin: 0; padding: 0; display: flex; align-items: center; }
+.nav-item.dropdown { position: relative; }
+.nav-link.dropdown-toggle { background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+.user-name { color: #858796; font-weight: 600; }
+.user-img { width: 40px; height: 40px; border-radius: 50%; }
+.dropdown-menu { position: absolute; top: 120%; right: 0; background-color: #fff; border-radius: 0.35rem; box-shadow: var(--card-shadow); z-index: 1000; min-width: 180px; padding: 0.5rem 0; border: 1px solid var(--border-color); }
+.dropdown-item-text { display: block; padding: 0.5rem 1.5rem; font-size: 0.9rem; color: #3a3b45; }
+.dropdown-divider { height: 1px; margin: 0.5rem 0; overflow: hidden; background-color: var(--border-color); }
+.dropdown-item { display: block; width: 100%; padding: 0.5rem 1.5rem; font-weight: 400; color: #3a3b45; text-align: left; background-color: transparent; border: 0; cursor: pointer; }
+.dropdown-item:hover { background-color: #f8f9fc; }
+
+
+/* --- CARD-LIKE CONTENT STYLING --- */
+.App-container {
+    background-color: var(--card-bg);
+    border-radius: 0.35rem;
+    padding: 0; /* Padding diatur oleh header & body kartu */
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color);
+    overflow: hidden; /* Mencegah konten meluber */
+    margin-bottom: 1.5rem; /* Memberi jarak antar kartu */
+}
+
+/* Card Header */
+.App-container > h1, .App-container > h2 {
+    padding: 1rem 1.5rem;
+    margin: 0;
+    background-color: var(--card-header-bg);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 1.1rem; /* Ukuran font disesuaikan */
+    font-weight: 700;
+    color: var(--card-header-text);
+}
+
+/* Card Body */
+.App-container > div, .App-container > main, .App-container > form {
+    padding: 1.5rem;
+}
+
+
+/* --- MODERN BUTTON STYLING (BOOTSTRAP-LIKE) --- */
+.btn {
+    padding: 0.375rem 0.75rem; /* Padding standar bootstrap */
+    font-size: 1rem;
+    border-radius: 0.35rem;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-weight: 400;
+    line-height: 1.5;
+    text-align: center;
+    text-decoration: none;
+    vertical-align: middle;
+    transition: all 0.2s ease-in-out;
+    display: inline-block; /* Agar bisa diberi margin */
+    margin-right: 5px; /* Memberi jarak antar tombol */
+    margin-bottom: 5px; /* Memberi jarak jika tombol wrap di mobile */
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+
+.btn-warning { background-color: var(--warning-yellow); border-color: var(--warning-yellow); color: #fff; }
+.btn-danger { background-color: var(--danger-red); border-color: var(--danger-red); color: #fff; }
+.btn-info { background-color: var(--info-cyan); border-color: var(--info-cyan); color: #fff; }
+.btn-success { background-color: var(--success-green); border-color: var(--success-green); color: white; width: auto; padding: 0.5rem 1rem; }
+
+.form-container button[type="submit"] {
+    width: auto;
+}
+
+/* --- MODERN TABLE STYLING --- */
+.table-responsive {
+    overflow-x: auto; /* Agar tabel bisa di-scroll horizontal di mobile */
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--main-content-text);
+}
+
+table th, table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+    white-space: nowrap; /* Mencegah teks turun baris */
+}
+
+table th {
+  background-color: #f8f9fc;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--primary-blue);
+}
+
+table tr:last-child td {
+    border-bottom: none;
+}
+table tr:hover {
+    background-color: #f8f9fc;
+}
+
+/* ... Kode Form & Responsive tetap sama ... */
+.form-container { background-color: transparent; border: none; }
+.form-group input, .form-group select { display: block; width: 100%; padding: 0.75rem 1rem; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #6e707e; background-color: #fff; background-clip: padding-box; border: 1px solid #d1d3e2; border-radius: 0.35rem; transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out; }
+.form-group input:focus, .form-group select:focus { border-color: var(--primary-blue); box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25); outline: none; }
+@media (min-width: 768px) { .user-name { display: inline; } .admin-dashboard.sidebar-toggled .sidebar { margin-left: -240px; } }
+@media (max-width: 767.98px) { .sidebar { position: fixed; height: 100%; margin-left: -240px; } .admin-dashboard.sidebar-toggled .sidebar { margin-left: 0; } }

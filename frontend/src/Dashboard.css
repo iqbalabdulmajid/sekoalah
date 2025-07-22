@@ -1,0 +1,147 @@
+.guru-dashboard {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f4f7fa;
+  min-height: 100vh;
+}
+
+.guru-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 30px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-bottom: 3px solid #1abc9c;
+}
+
+.guru-header h1 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.8rem;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.user-info span {
+  font-size: 1rem;
+  color: #34495e;
+}
+
+/* Menggunakan kembali style tombol logout dari admin */
+.logout-button {
+  padding: 10px 15px;
+  background-color: #e74c3c;
+  border: none;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.logout-button:hover {
+  background-color: #c0392b;
+}
+
+.guru-main-content {
+  padding: 30px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 30px;
+}
+
+@media (min-width: 992px) {
+  .guru-main-content {
+    grid-template-columns: 1fr 2fr;
+  }
+}
+
+.dashboard-card {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 25px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  text-align: center;
+}
+
+.dashboard-card h2 {
+  margin-top: 0;
+  color: #2c3e50;
+  border-bottom: 2px solid #ecf0f1;
+  padding-bottom: 15px;
+  margin-bottom: 20px;
+}
+
+.scan-button {
+  padding: 12px 25px;
+  font-size: 1rem;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.scan-button:hover {
+  background-color: #2980b9;
+}
+
+.qr-scanner-container {
+  width: 100%;
+  max-width: 300px;
+  margin: 20px auto;
+  border: 2px solid #eee;
+  padding: 5px;
+  border-radius: 8px;
+}
+
+.status-message {
+  margin-top: 15px;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.jadwal-card {
+  text-align: left;
+}
+
+.jadwal-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.jadwal-table th, .jadwal-table td {
+  padding: 12px;
+  border-bottom: 1px solid #ecf0f1;
+  text-align: left;
+}
+
+.jadwal-table th {
+  color: #34495e;
+}
+
+.aksi-cell {
+  text-align: center;
+}
+
+.btn-mulai, .btn-selesai {
+  padding: 8px 15px;
+  border: none;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.btn-mulai { background-color: #2ecc71; }
+.btn-mulai:hover { background-color: #27ae60; }
+.btn-selesai { background-color: #e74c3c; }
+.btn-selesai:hover { background-color: #c0392b; }
+
+.status-selesai {
+  color: #2ecc71;
+  font-weight: bold;
+}
