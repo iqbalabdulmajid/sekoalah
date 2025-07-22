@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { useNavigate } from 'react-router-dom'; // 1. Impor useNavigate
+
 import { 
   Container, 
   Box, 
@@ -10,10 +12,12 @@ import {
   Paper 
 } from "@mui/material";
 
+
 function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const navigate = useNavigate(); // 2. Panggil hook useNavigate
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -29,7 +33,8 @@ function LoginPage() {
       );
 
       localStorage.setItem("token", response.data.token);
-      window.location.href = "/"; // Arahkan ke rute utama yang akan mengarahkan user
+     // ✅ 3. Gunakan navigate untuk pindah halaman tanpa reload
+      navigate("/"); 
     } catch (error) {
       setMessage(error.response?.data?.error || "Login gagal.");
     }
