@@ -56,18 +56,24 @@ function JadwalForm({ open, onClose, onSuccess, gurus }) {
   };
 
   const handleSubmit = async () => {
-    setError('');
-    const token = localStorage.getItem('token');
-    try {
-      await axios.post('http://localhost:5000/api/jadwal', formData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      onSuccess();
-      onClose();
-    } catch (err) {
-      setError(err.response?.data?.error || 'Gagal membuat jadwal.');
-    }
-  };
+  setError('');
+  const token = localStorage.getItem('token');
+  
+  // ✅ Definisikan URL API secara dinamis
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+  try {
+    // ✅ Gunakan variabel API_URL saat memanggil axios
+    await axios.post(`${API_URL}/api/jadwal`, formData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    onSuccess(); // Panggil fungsi callback untuk refresh data
+    onClose();   // Tutup modal/dialog
+  } catch (err) {
+    setError(err.response?.data?.error || 'Gagal membuat jadwal.');
+  }
+};
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -139,39 +145,53 @@ function ManajemenJadwal() {
   const token = localStorage.getItem('token');
 
   const fetchData = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const headers = { headers: { Authorization: `Bearer ${token}` } };
-      const [jadwalRes, guruRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/jadwal', headers),
-        axios.get('http://localhost:5000/api/gurus', headers)
-      ]);
-      setJadwal(jadwalRes.data);
-      setGurus(guruRes.data);
-    } catch (err) {
-      setError('Gagal memuat data dari server.');
-      console.error('Gagal mengambil data', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  setError('');
+
+  try {
+    // ✅ Definisikan URL API secara dinamis
+    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    const headers = { headers: { Authorization: `Bearer ${token}` } };
+    
+    // ✅ Gunakan variabel API_URL di kedua panggilan
+    const [jadwalRes, guruRes] = await Promise.all([
+      axios.get(`${API_URL}/api/jadwal`, headers),
+      axios.get(`${API_URL}/api/gurus`, headers)
+    ]);
+
+    setJadwal(jadwalRes.data);
+    setGurus(guruRes.data);
+  } catch (err) {
+    setError('Gagal memuat data dari server.');
+    console.error('Gagal mengambil data', err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchData();
   }, []);
 
   const handleDelete = async (jadwalId) => {
-    if (window.confirm('Apakah Anda yakin ingin menghapus jadwal ini?')) {
-        try {
-            await axios.delete(`http://localhost:5000/api/jadwal/${jadwalId}`, { headers: { Authorization: `Bearer ${token}` } });
-            fetchData();
-        } catch (err) {
-            setError('Gagal menghapus jadwal.');
-            console.error(err);
-        }
+  if (window.confirm('Apakah Anda yakin ingin menghapus jadwal ini?')) {
+    try {
+      // ✅ Definisikan URL API secara dinamis
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      
+      // ✅ Gunakan variabel API_URL saat memanggil axios
+      await axios.delete(`${API_URL}/api/jadwal/${jadwalId}`, { 
+        headers: { Authorization: `Bearer ${token}` } 
+      });
+      
+      // Panggil fetchData untuk memperbarui daftar setelah hapus
+      fetchData();
+    } catch (err) {
+      setError('Gagal menghapus jadwal.');
+      console.error(err);
     }
-  };
+  }
+};
 
   return (
     <Box>
