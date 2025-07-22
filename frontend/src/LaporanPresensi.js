@@ -87,19 +87,22 @@ function LaporanPresensi() {
   const token = localStorage.getItem("token");
   const componentRef = useRef();
 
-  // Fungsi cetak PDF
+  // ✅ Definisikan URL API secara dinamis di satu tempat
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+  // Fungsi cetak PDF (tidak berubah)
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
     documentTitle: "Laporan-Presensi",
   });
 
-  // Fungsi ekspor ke Excel
+  // Fungsi ekspor ke Excel (tidak berubah)
   const exportToExcel = () => {
     if (laporan.length === 0) return;
 
     const dataToExport = laporan.map((item) => ({
       "Nama Guru": item.nama_guru,
-      Tanggal: new Date(item.tanggal).toLocaleDateString("id-ID", {
+      "Tanggal": new Date(item.tanggal).toLocaleDateString("id-ID", {
         year: "numeric",
         month: "long",
         day: "numeric",
@@ -110,28 +113,25 @@ function LaporanPresensi() {
             minute: "2-digit",
           })
         : "-",
-      Status: item.status,
+      "Status": item.status,
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan Presensi");
 
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
-    const dataBlob = new Blob([excelBuffer], {
-      type: "application/octet-stream",
-    });
-
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const dataBlob = new Blob([excelBuffer], { type: "application/octet-stream" });
     saveAs(dataBlob, `Laporan_Presensi_${Date.now()}.xlsx`);
   };
 
+  // useEffect untuk mengambil data guru
   useEffect(() => {
     const fetchGurus = async () => {
+      if (!token) return; // Jangan fetch jika tidak ada token
       try {
-        const response = await axios.get("http://localhost:5000/api/gurus", {
+        // ✅ Gunakan variabel API_URL
+        const response = await axios.get(`${API_URL}/api/gurus`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setGurus(response.data);
@@ -140,15 +140,18 @@ function LaporanPresensi() {
       }
     };
     fetchGurus();
-  }, [token]);
+  }, [token, API_URL]); // Tambahkan API_URL ke dependency array
 
+  // useEffect untuk mengambil data laporan
   useEffect(() => {
     const fetchLaporan = async () => {
+      if (!token) return; // Jangan fetch jika tidak ada token
       setLoading(true);
       setError("");
       try {
+        // ✅ Gunakan variabel API_URL
         const response = await axios.get(
-          `http://localhost:5000/api/laporan/presensi?guru_id=${selectedGuru}`,
+          `${API_URL}/api/laporan/presensi?guru_id=${selectedGuru}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -162,7 +165,7 @@ function LaporanPresensi() {
       }
     };
     fetchLaporan();
-  }, [token, selectedGuru]);
+  }, [token, selectedGuru, API_URL]); // Tambahkan API_URL ke dependency array
 
   const handleFilterChange = (event) => {
     setSelectedGuru(event.target.value);
