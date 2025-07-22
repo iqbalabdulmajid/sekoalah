@@ -71,32 +71,38 @@ function UserForm({ open, onClose, onSuccess, userToEdit }) {
   };
 
   const handleSubmit = async () => {
-    setError('');
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
-    const url = isEditMode 
-      ? `http://localhost:5000/api/gurus/${userToEdit.id}` 
-      : 'http://localhost:5000/api/gurus';
-    const method = isEditMode ? 'put' : 'post';
+  setError('');
+  const token = localStorage.getItem('token');
+  const headers = { Authorization: `Bearer ${token}` };
 
-    if (!isEditMode && !formData.password) {
-      setError('Password wajib diisi untuk guru baru.');
-      return;
-    }
-    
-    const dataToSend = { ...formData };
-    if (isEditMode && !dataToSend.password) {
-      delete dataToSend.password;
-    }
+  // ✅ Definisikan URL API secara dinamis
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-    try {
-      await axios[method](url, dataToSend, { headers });
-      onSuccess();
-      onClose();
-    } catch (err) {
-      setError(err.response?.data?.error || 'Terjadi kesalahan.');
-    }
-  };
+  // ✅ Gunakan variabel API_URL saat membangun URL
+  const url = isEditMode 
+    ? `${API_URL}/api/gurus/${userToEdit.id}` 
+    : `${API_URL}/api/gurus`;
+  
+  const method = isEditMode ? 'put' : 'post';
+
+  if (!isEditMode && !formData.password) {
+    setError('Password wajib diisi untuk guru baru.');
+    return;
+  }
+  
+  const dataToSend = { ...formData };
+  if (isEditMode && !dataToSend.password) {
+    delete dataToSend.password;
+  }
+
+  try {
+    await axios[method](url, dataToSend, { headers });
+    onSuccess(); // Panggil fungsi callback untuk refresh data
+    onClose();   // Tutup modal/dialog
+  } catch (err) {
+    setError(err.response?.data?.error || 'Terjadi kesalahan.');
+  }
+};
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -160,21 +166,26 @@ function AdminPanel() {
 
 
   const fetchGurus = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/gurus', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setGurus(response.data);
-    } catch (err) {
-      setError('Gagal memuat data guru.');
-      console.error("Gagal mengambil data guru:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  setError('');
+  try {
+    // ✅ Definisikan URL API secara dinamis
+    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    const token = localStorage.getItem('token');
+    
+    // ✅ Gunakan variabel API_URL saat memanggil axios
+    const response = await axios.get(`${API_URL}/api/gurus`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    setGurus(response.data);
+  } catch (err) {
+    setError('Gagal memuat data guru.');
+    console.error("Gagal mengambil data guru:", err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchGurus();
@@ -195,36 +206,48 @@ function AdminPanel() {
   };
 
   const handleDelete = async (guruId) => {
-    if (window.confirm('Apakah Anda yakin ingin menghapus data guru ini?')) {
-      try {
-        const token = localStorage.getItem('token');
-        await axios.delete(`http://localhost:5000/api/gurus/${guruId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        fetchGurus();
-      } catch (err) {
-        setError('Gagal menghapus data guru.');
-        console.error("Gagal menghapus guru:", err);
-      }
+  if (window.confirm('Apakah Anda yakin ingin menghapus data guru ini?')) {
+    try {
+      // ✅ Definisikan URL API secara dinamis
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('token');
+      
+      // ✅ Gunakan variabel API_URL saat memanggil axios
+      await axios.delete(`${API_URL}/api/gurus/${guruId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // Panggil fetchGurus untuk memperbarui daftar setelah hapus
+      fetchGurus();
+    } catch (err) {
+      setError('Gagal menghapus data guru.');
+      console.error("Gagal menghapus guru:", err);
     }
-  };
+  }
+};
 
   const handleGenerateQr = async (guru) => {
-    if (!guru) return;
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post('http://localhost:5000/api/qrcode/generate', 
-        { userId: guru.id, userName: guru.nama },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setQrCodeImage(response.data.qrCodeImage);
-      setQrUser(guru);
-      setQrDialogOpen(true);
-    } catch (error) {
-      console.error("Gagal generate QR Code:", error);
-      setError("Gagal membuat QR Code.");
-    }
-  };
+  if (!guru) return;
+  try {
+    // ✅ Definisikan URL API secara dinamis
+    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    const token = localStorage.getItem('token');
+    
+    // ✅ Gunakan variabel API_URL saat memanggil axios
+    const response = await axios.post(
+      `${API_URL}/api/qrcode/generate`, 
+      { userId: guru.id, userName: guru.nama },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    
+    setQrCodeImage(response.data.qrCodeImage);
+    setQrUser(guru);
+    setQrDialogOpen(true);
+  } catch (error) {
+    console.error("Gagal generate QR Code:", error);
+    setError("Gagal membuat QR Code.");
+  }
+};
 
   // useEffect untuk menangani countdown dan refresh QR code
   useEffect(() => {
