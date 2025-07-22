@@ -1,14 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-const { protect } = require('../middleware/auth'); // Impor middleware untuk proteksi
+const { protect } = require('../middleware/auth');
 
-// Endpoint untuk mengambil data presensi dengan filter
-// GET /api/laporan/presensi?guru_id=...
-router.get('/presensi', protect, (req, res) => {
-  // Ambil query parameter guru_id
+router.get('/presensi', protect, async (req, res) => {
   const { guru_id } = req.query;
 
+  // Query dasar
   let sql = `
     SELECT
       absensi.id,
@@ -24,19 +22,25 @@ router.get('/presensi', protect, (req, res) => {
 
   // Jika ada filter guru_id dan bukan 'all', tambahkan klausa WHERE
   if (guru_id && guru_id !== 'all') {
+    // ✅ Gunakan placeholder $1 untuk PostgreSQL
     sql += ' WHERE absensi.guru_id = $1';
     params.push(guru_id);
   }
 
   sql += ' ORDER BY absensi.tanggal DESC, guru.nama ASC';
 
-  db.query(sql, params, (err, results) => {
-    if (err) {
-      console.error("Error mengambil laporan presensi:", err);
-      return res.status(500).json({ error: "Gagal mengambil data laporan." });
-    }
-    res.status(200).json(results);
-  });
+  // ✅ Tambahkan log ini untuk debugging
+  console.log("Executing SQL:", sql);
+  console.log("With Params:", params);
+
+  try {
+    const { rows } = await db.query(sql, params);
+    // 'rows' akan menjadi array kosong [] jika tidak ada data, ini normal.
+    res.status(200).json(rows); 
+  } catch (err) {
+    console.error("Error mengambil laporan presensi:", err);
+    return res.status(500).json({ error: "Gagal mengambil data laporan." });
+  }
 });
 
 module.exports = router;
