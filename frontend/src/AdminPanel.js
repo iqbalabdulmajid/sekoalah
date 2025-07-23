@@ -254,7 +254,7 @@ function AdminPanel() {
     if (!qrDialogOpen || !qrUser) return;
 
     // Set countdown awal
-    setCountdown(10);
+    setCountdown(30);
 
     // Timer untuk mengurangi countdown setiap detik
     const countdownInterval = setInterval(() => {
@@ -264,8 +264,8 @@ function AdminPanel() {
     // Timer untuk me-refresh QR code setiap 10 detik
     const refreshInterval = setInterval(() => {
       handleGenerateQr(qrUser);
-      setCountdown(10); // Reset countdown
-    }, 10000);
+      setCountdown(30); // Reset countdown
+    }, 30000);
 
     // Cleanup: Hapus interval saat dialog ditutup
     return () => {
@@ -399,7 +399,7 @@ function AdminPanel() {
             QR Code ini akan diperbarui secara otomatis.
           </DialogContentText>
           <Box sx={{ width: '100%', mt: 2 }}>
-            <LinearProgress variant="determinate" value={countdown * 10} />
+            <LinearProgress variant="determinate" value={countdown * 30} />
             <Typography variant="caption">
               Memperbarui dalam {countdown} detik...
             </Typography>
