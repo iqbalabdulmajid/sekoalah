@@ -4,7 +4,8 @@ const db = require('../db');
 const jwt = require('jsonwebtoken');
 const { protect } = require('../middleware/auth');
 
-const JWT_SECRET = 'ini_adalah_kunci_rahasia_sistem_presensi_anda';
+// Pastikan variabel ini sama dengan yang digunakan saat membuat token
+const JWT_SECRET = 'ini_adalah_kunci_rahasia_sistem_presensi_anda'; 
 const QR_CODE_VALIDITY_SECONDS = 15;
 
 // Endpoint untuk mencatat kehadiran (POST /api/presensi/scan)
@@ -17,31 +18,36 @@ router.post('/scan', protect, async (req, res) => {
 
   try {
     // 1. Verifikasi dan decode token dari QR Code
+    // Catatan: Sebaiknya gunakan opsi 'expiresIn' saat membuat token, 
+    // maka jwt.verify() akan otomatis menangani error kedaluwarsa.
     const decoded = jwt.verify(qrData, JWT_SECRET);
     
-    // 2. Cek waktu kedaluwarsa
-    const issuedAt = decoded.iat * 1000;
-    const now = Date.now();
+    // 2. Cek waktu kedaluwarsa secara manual (metode ini sudah benar dan aman dari timezone)
+    const issuedAt = decoded.iat * 1000; // iat selalu dalam format UTC
+    const now = Date.now(); // Date.now() juga selalu dalam format UTC
     const ageInSeconds = (now - issuedAt) / 1000;
 
     if (ageInSeconds > QR_CODE_VALIDITY_SECONDS) {
       return res.status(400).json({ message: "QR Code sudah kedaluwarsa." });
     }
 
-    // 3. Jika valid, lanjutkan proses presensi dengan async/await
+    // 3. Jika valid, lanjutkan proses presensi
     const userId = decoded.id;
 
     // Gunakan blok try...catch baru untuk operasi database
     try {
-      // ✅ SQL disesuaikan untuk PostgreSQL
-      const checkSql = "SELECT * FROM absensi WHERE guru_id = $1 AND tanggal = CURRENT_DATE";
+      // ✅ SQL diperbaiki untuk menggunakan zona waktu 'Asia/Jakarta'
+      const today = "(NOW() AT TIME ZONE 'Asia/Jakarta')::DATE";
+      const checkSql = `SELECT * FROM absensi WHERE guru_id = $1 AND tanggal = ${today}`;
       const { rows } = await db.query(checkSql, [userId]);
 
       if (rows.length > 0) {
         return res.status(409).json({ message: "Anda sudah melakukan presensi hari ini." });
       }
       
-      const insertSql = "INSERT INTO absensi (guru_id, tanggal, waktu_presensi, status) VALUES ($1, CURRENT_DATE, NOW(), $2)";
+      // ✅ SQL diperbaiki untuk menggunakan zona waktu 'Asia/Jakarta'
+      const nowInJakarta = "(NOW() AT TIME ZONE 'Asia/Jakarta')";
+      const insertSql = `INSERT INTO absensi (guru_id, tanggal, waktu_presensi, status) VALUES ($1, ${today}, ${nowInJakarta}, $2)`;
       await db.query(insertSql, [userId, 'hadir']);
       
       res.status(201).json({ message: "Presensi berhasil dicatat!" });
@@ -52,8 +58,9 @@ router.post('/scan', protect, async (req, res) => {
     }
 
   } catch (error) {
+    // Error ini akan ditangkap jika token tidak valid atau sudah kedaluwarsa (jika pakai expiresIn)
     console.error("Gagal verifikasi QR token:", error);
-    return res.status(400).json({ message: "QR Code tidak valid." });
+    return res.status(400).json({ message: "QR Code tidak valid atau kedaluwarsa." });
   }
 });
 
@@ -61,8 +68,9 @@ router.post('/scan', protect, async (req, res) => {
 router.get('/status', protect, async (req, res) => {
   const guruId = req.user.id;
   try {
-    // ✅ SQL disesuaikan untuk PostgreSQL
-    const sql = "SELECT * FROM absensi WHERE guru_id = $1 AND tanggal = CURRENT_DATE";
+    // ✅ SQL diperbaiki untuk menggunakan zona waktu 'Asia/Jakarta'
+    const today = "(NOW() AT TIME ZONE 'Asia/Jakarta')::DATE";
+    const sql = `SELECT * FROM absensi WHERE guru_id = $1 AND tanggal = ${today}`;
     const { rows } = await db.query(sql, [guruId]);
     res.status(200).json({ isPresent: rows.length > 0 });
   } catch (err) {
@@ -84,10 +92,11 @@ router.post('/manual', protect, async (req, res) => {
   }
 
   try {
-    // ✅ Logika "Upsert" menggunakan sintaks PostgreSQL ON CONFLICT
+    // ✅ SQL diperbaiki untuk menggunakan zona waktu 'Asia/Jakarta'
+    const today = "(NOW() AT TIME ZONE 'Asia/Jakarta')::DATE";
     const sql = `
       INSERT INTO absensi (guru_id, tanggal, status, waktu_presensi)
-      VALUES ($1, CURRENT_DATE, $2, NULL)
+      VALUES ($1, ${today}, $2, NULL)
       ON CONFLICT (guru_id, tanggal) DO UPDATE 
       SET status = EXCLUDED.status, waktu_presensi = NULL;
     `;
@@ -100,4 +109,4 @@ router.post('/manual', protect, async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;
