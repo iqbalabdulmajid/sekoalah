@@ -6,7 +6,7 @@ const { protect } = require('../middleware/auth');
 
 // Pastikan variabel ini sama dengan yang digunakan saat membuat token
 const JWT_SECRET = 'ini_adalah_kunci_rahasia_sistem_presensi_anda'; 
-const QR_CODE_VALIDITY_SECONDS = 15;
+const QR_CODE_VALIDITY_SECONDS = 30;
 
 // Endpoint untuk mencatat kehadiran (POST /api/presensi/scan)
 router.post('/scan', protect, async (req, res) => {
