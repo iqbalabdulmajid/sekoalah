@@ -227,11 +227,11 @@ const UserProfileCard = ({ user, currentTime }) => (
 
 const PresenceCard = ({ status, onOpenModal, loading }) => {
   const formatTime = (isoString) => {
-  if (!isoString) return '';
-  // Ambil karakter dari indeks 11 sampai 16 (contoh: "13:06")
-  // dari string "2025-07-27 13:06:28.11399+00"
-  return isoString.substring(11, 16);
-};
+    if (!isoString) return "";
+    // Ambil karakter dari indeks 11 sampai 16 (contoh: "13:06")
+    // dari string "2025-07-27 13:06:28.11399+00"
+    return isoString.substring(11, 16);
+  };
 
   const hasCheckedIn = status?.waktu_masuk;
   const hasCheckedOut = status?.waktu_pulang;
@@ -865,47 +865,69 @@ function Dashboard() {
     };
   }, [isModalOpen, handleScanResult]);
 
+  // ---- HANDLE ACTION ----
   const handleAction = async (action, payload) => {
-    // ✅ Definisikan URL API secara dinamis
     const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
-    const endpoints = {
-      mulai: {
-        method: "post",
-        // ✅ Gunakan variabel API_URL
-        url: `${API_URL}/api/aktivitas/mulai`,
-        data: { jadwal_id: payload },
-      },
-      selesai: {
-        method: "put",
-        // ✅ Gunakan variabel API_URL
-        url: `${API_URL}/api/aktivitas/selesai/${payload}`,
-        data: {},
-      },
-    };
-    const messages = {
-      mulai: {
-        success: "Aktivitas mengajar berhasil dimulai.",
-        fail: "Gagal memulai aktivitas.",
-      },
-      selesai: {
-        success: "Aktivitas mengajar berhasil diselesaikan.",
-        fail: "Gagal menyelesaikan aktivitas.",
-      },
-    };
-
     try {
-      const { method, url, data } = endpoints[action];
-      await axios[method](url, data, {
+      let url = "";
+      let method = "";
+      let data = {};
+      let matchId = null;
+
+      if (action === "mulai") {
+        url = `${API_URL}/api/aktivitas/mulai`;
+        method = "post";
+        data = { jadwal_id: payload };
+        matchId = payload; // id jadwal
+      } else if (action === "selesai") {
+        url = `${API_URL}/api/aktivitas/selesai/${payload}`;
+        method = "put";
+        data = {};
+        matchId = payload; // id aktivitas
+      }
+
+      const response = await axios[method](url, data, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      alert(messages[action].success);
-      fetchInitialData(); // Refresh data
+
+      if (action === "mulai") {
+        const aktivitasId = response.data.aktivitasId;
+
+        setJadwal((prev) =>
+          prev.map((item) =>
+            item.id === matchId
+              ? {
+                  ...item,
+                  status: "berlangsung",
+                  aktivitasId: aktivitasId, // 🟢 tambahkan aktivitasId
+                }
+              : item
+          )
+        );
+      } else if (action === "selesai") {
+        setJadwal((prev) =>
+          prev.map((item) =>
+            item.aktivitasId === matchId ? { ...item, status: "selesai" } : item
+          )
+        );
+      }
+
+      alert(
+        action === "mulai"
+          ? "Aktivitas mengajar berhasil dimulai."
+          : "Aktivitas mengajar berhasil diselesaikan."
+      );
     } catch (error) {
-      alert(messages[action].fail);
-      console.error(error);
+      alert(
+        action === "mulai"
+          ? "Gagal memulai aktivitas."
+          : "Gagal menyelesaikan aktivitas."
+      );
+      console.error("❌ Error:", error?.response?.data || error.message);
     }
   };
+
   // Fungsi BARU untuk menangani perubahan status manual
   const handleManualPresence = async (status) => {
     try {
@@ -1173,6 +1195,7 @@ function Dashboard() {
                                 onClick={() =>
                                   handleAction("selesai", item.aktivitasId)
                                 }
+                                disabled={!item.aktivitasId} // 🛡️ Untuk menghindari error jika belum ada aktivitasId
                               >
                                 Selesai
                               </Button>
