@@ -9,7 +9,7 @@ const formatWIBTime = (waktu) => {
       timeStyle: "short",
     });
   } else {
-    return dayjs.utc(waktu).tz("Asia/Jakarta").format("DD MMM YYYY, HH:mm");
+    return dayjs.utc(waktu).tz("Etc/GMT+7").format("DD MMM YYYY, HH:mm");
   }
 };
 
