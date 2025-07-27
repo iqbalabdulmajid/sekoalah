@@ -1,4 +1,3 @@
-// src/pages/ManajemenJadwal.js
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import dayjs from "dayjs";
@@ -15,7 +14,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   IconButton,
   Dialog,
   DialogActions,
@@ -34,12 +32,11 @@ import DeleteIcon from "@mui/icons-material/Delete";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-// Import komponen MUI
-
-
-// Fungsi format waktu ke zona Asia/Jakarta
-const formatWIBTime = (waktu) => {
-  return dayjs.utc(waktu).tz("Asia/Jakarta").format("DD MMM YYYY, HH:mm");
+// ✅ Format waktu tergantung environment (local vs vercel)
+const formatTimeByEnv = (waktu) => {
+  const isLocalhost = typeof window !== "undefined" && window.location.hostname === "localhost";
+  const timezone = isLocalhost ? "Asia/Jakarta" : "Etc/GMT+7"; // UTC-7
+  return dayjs.utc(waktu).tz(timezone).format("DD MMM YYYY, HH:mm");
 };
 
 // Komponen Form
@@ -244,10 +241,10 @@ function ManajemenJadwal() {
                       <Typography variant="body2" color="text.secondary">{item.mata_pelajaran}</Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" color="text.secondary">{formatWIBTime(item.waktu_mulai)}</Typography>
+                      <Typography variant="body2" color="text.secondary">{formatTimeByEnv(item.waktu_mulai)}</Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" color="text.secondary">{formatWIBTime(item.waktu_selesai)}</Typography>
+                      <Typography variant="body2" color="text.secondary">{formatTimeByEnv(item.waktu_selesai)}</Typography>
                     </TableCell>
                     <TableCell align="center">
                       <Tooltip title="Hapus Jadwal">
