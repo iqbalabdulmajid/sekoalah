@@ -33,11 +33,13 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 // ✅ Format waktu tergantung environment (local vs vercel)
-const formatTimeByEnv = (waktu) => {
+const formatTime = (waktu) => {
   const isLocalhost = typeof window !== "undefined" && window.location.hostname === "localhost";
-  const timezone = isLocalhost ? "Asia/Jakarta" : "Etc/GMT+7"; // UTC-7
-  return dayjs.utc(waktu).tz(timezone).format("DD MMM YYYY, HH:mm");
+  const time = dayjs.utc(waktu); // pastikan dari UTC
+  const adjusted = isLocalhost ? time.add(7, "hour") : time;
+  return adjusted.format("DD MMM YYYY, HH:mm:ss");
 };
+
 
 // Komponen Form
 function JadwalForm({ open, onClose, onSuccess, gurus }) {
@@ -241,10 +243,10 @@ function ManajemenJadwal() {
                       <Typography variant="body2" color="text.secondary">{item.mata_pelajaran}</Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" color="text.secondary">{formatTimeByEnv(item.waktu_mulai)}</Typography>
+                      <Typography variant="body2" color="text.secondary">{formatTime(item.waktu_mulai)}</Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" color="text.secondary">{formatTimeByEnv(item.waktu_selesai)}</Typography>
+                      <Typography variant="body2" color="text.secondary">{formatTime(item.waktu_selesai)}</Typography>
                     </TableCell>
                     <TableCell align="center">
                       <Tooltip title="Hapus Jadwal">
