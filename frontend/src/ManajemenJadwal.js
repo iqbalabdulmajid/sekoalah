@@ -304,13 +304,14 @@ function ManajemenJadwal() {
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" color="text.secondary">
-                        {new Date(
-                          item.waktu_mulai.replace(" ", "T")
-                        ).toLocaleString("id-ID", {
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                          timeZone: "Asia/Jakarta", // memastikan tetap WIB
-                        })}
+                        {new Date(item.waktu_mulai).toLocaleTimeString(
+                          "id-ID",
+                          {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            timeZone: "Asia/Jakarta", // WIB (UTC+7)
+                          }
+                        )}
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -318,7 +319,6 @@ function ManajemenJadwal() {
                         {new Date(item.waktu_selesai).toLocaleString("id-ID", {
                           dateStyle: "medium",
                           timeStyle: "short",
-                          timeZone: "Asia/Jakarta", // WIB (UTC+7)
                         })}
                       </Typography>
                     </TableCell>
