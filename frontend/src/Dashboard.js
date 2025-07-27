@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import { Html5Qrcode, Html5QrcodeScanner } from "html5-qrcode";
-
+import dayjs from "dayjs";
 // Import komponen-komponen MUI
 import {
   AppBar,
@@ -744,6 +744,12 @@ function Dashboard() {
   const [notifiedJadwalIds, setNotifiedJadwalIds] = useState([]);
 
   const token = localStorage.getItem("token");
+  const formatTimeManual = (waktu) => {
+  const isLocalhost = typeof window !== "undefined" && window.location.hostname === "localhost";
+  const time = dayjs.utc(waktu); // Pastikan waktu dari Supabase UTC
+  const adjusted = isLocalhost ? time.add(7, "hour") : time;
+  return adjusted.format("HH:mm");
+};
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -1167,18 +1173,7 @@ function Dashboard() {
                             {item.mata_pelajaran}
                           </TableCell>
                           <TableCell>
-                            {`${new Date(item.waktu_mulai).toLocaleTimeString(
-                              "id-ID",
-                              {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }
-                            )} - ${new Date(
-                              item.waktu_selesai
-                            ).toLocaleTimeString("id-ID", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}`}
+                           {`${formatTimeManual(item.waktu_mulai)} - ${formatTimeManual(item.waktu_selesai)}`}
                           </TableCell>
                           <TableCell align="center">
                             {item.status === "selesai" ? (
