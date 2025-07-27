@@ -55,6 +55,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import NotificationsIcon from "@mui/icons-material/Notifications";
+import LoginIcon from "@mui/icons-material/Login";
+import DoNotDisturbIcon from "@mui/icons-material/DoNotDisturb";
 import { Snackbar } from "@mui/material";
 
 // --- STYLED COMPONENTS --- //
@@ -216,97 +218,156 @@ const UserProfileCard = ({ user, currentTime }) => (
           year: "numeric",
           month: "long",
           day: "numeric",
+          timeZone: "Asia/Jakarta", // Ditambahkan
         })}
       </Typography>
     </CardContent>
   </ModernCard>
 );
 
-const PresenceCard = ({ onOpenModal }) => (
-  <ModernCard>
-    <CardContent
-      sx={{
-        p: 3,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        height: "100%",
-        textAlign: "center",
-      }}
-    >
-      <Typography
-        variant="h6"
-        component="h2"
-        sx={{ mb: 2, fontWeight: "bold", color: "#333" }}
-      >
-        Presensi Kehadiran
-      </Typography>
-      <Typography variant="body2" sx={{ mb: 3, color: "#666" }}>
-        Pindai atau unggah QR Code untuk mencatat kehadiran Anda.
-      </Typography>
-      <Button
-        variant="contained"
-        size="large"
-        startIcon={<QrCodeScannerIcon />}
-        onClick={onOpenModal}
+const PresenceCard = ({ status, onOpenModal, loading }) => {
+  const formatTime = (isoString) => {
+  if (!isoString) return '';
+  // Ambil karakter dari indeks 11 sampai 16 (contoh: "13:06")
+  // dari string "2025-07-27 13:06:28.11399+00"
+  return isoString.substring(11, 16);
+};
+
+  const hasCheckedIn = status?.waktu_masuk;
+  const hasCheckedOut = status?.waktu_pulang;
+  const isOtherStatus = ["izin", "sakit", "alpa"].includes(status?.status);
+
+  const getStatusInfo = () => {
+    if (loading) {
+      return {
+        title: "Memuat Status...",
+        description: "Mohon tunggu sebentar.",
+      };
+    }
+
+    if (hasCheckedOut) {
+      return {
+        title: "Absensi Selesai",
+        description: `Masuk: ${formatTime(hasCheckedIn)}, Pulang: ${formatTime(
+          hasCheckedOut
+        )}`,
+      };
+    }
+
+    if (hasCheckedIn && !hasCheckedOut) {
+      return {
+        title: "Belum Absen Pulang",
+        description: "Anda belum melakukan absensi pulang hari ini.",
+      };
+    }
+
+    if (isOtherStatus) {
+      return {
+        title: `Status: ${
+          status.status.charAt(0).toUpperCase() + status.status.slice(1)
+        }`,
+        description: "Anda tidak perlu melakukan absensi.",
+      };
+    }
+
+    return {
+      title: "Presensi Kehadiran",
+      description: "Anda belum melakukan absensi masuk hari ini.",
+    };
+  };
+
+  const { title, description } = getStatusInfo();
+
+  return (
+    <Box sx={{ p: 2, borderRadius: 3, boxShadow: 3, bgcolor: "white" }}>
+      <CardContent
         sx={{
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-          borderRadius: "12px",
-          py: 1.5,
-          px: 3,
-          fontSize: "0.9rem",
-          textTransform: "none",
-          boxShadow: "0 8px 24px rgba(102, 126, 234, 0.3)",
-          "&:hover": {
-            background: "linear-gradient(135deg, #5a67d8 0%, #6b5b95 100%)",
-            boxShadow: "0 12px 32px rgba(102, 126, 234, 0.5)",
-          },
+          p: 3,
+          textAlign: "center",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
         }}
       >
-        Pindai QR
-      </Button>
-    </CardContent>
-  </ModernCard>
-);
+        <Typography variant="h6" sx={{ mb: 1, fontWeight: "bold" }}>
+          {title}
+        </Typography>
+        <Typography
+          variant="body2"
+          sx={{ mb: 3, color: "text.secondary", minHeight: "40px" }}
+        >
+          {description}
+        </Typography>
+        <Stack direction="row" spacing={2} justifyContent="center">
+          <Button
+            variant="contained"
+            size="large"
+            startIcon={<LoginIcon />}
+            onClick={onOpenModal}
+            disabled={loading || hasCheckedIn || isOtherStatus}
+            sx={{ flex: 1, borderRadius: "12px", textTransform: "none" }}
+          >
+            Masuk
+          </Button>
+          <Button
+            variant="outlined"
+            size="large"
+            startIcon={<LogoutIcon />}
+            onClick={onOpenModal}
+            disabled={
+              loading || !hasCheckedIn || hasCheckedOut || isOtherStatus
+            }
+            sx={{ flex: 1, borderRadius: "12px", textTransform: "none" }}
+          >
+            Pulang
+          </Button>
+        </Stack>
+      </CardContent>
+    </Box>
+  );
+};
 
+// --- MODAL QR SCANNER ---
 const QrScannerModal = ({
   open,
   handleClose,
   handleScanResult,
   setInfoMessage,
 }) => {
-  const [scanMode, setScanMode] = useState("select"); // 'select', 'camera'
+  const [scanMode, setScanMode] = useState("select");
   const fileInputRef = useRef(null);
   const scannerRef = useRef(null);
 
-  const onModalClose = () => {
-    if (scannerRef.current && scannerRef.current.getState() === 2) {
+  const onModalClose = useCallback(() => {
+    if (scannerRef.current) {
       scannerRef.current
         .clear()
         .catch((err) => console.error("Gagal membersihkan scanner.", err));
+      scannerRef.current = null;
     }
-    scannerRef.current = null;
     setScanMode("select");
     handleClose();
-  };
+  }, [handleClose]);
 
   useEffect(() => {
     if (open && scanMode === "camera" && !scannerRef.current) {
       const scanner = new Html5QrcodeScanner(
         "qr-reader-modal",
-        { fps: 10, qrbox: { width: 250, height: 250 }, supportedScanTypes: [] },
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          supportedScanTypes: [],
+        },
         false
       );
 
-      const onScanSuccess = (decodedText, decodedResult) => {
-        if (scanner.getState() === 2) {
-          scanner.clear();
-          scannerRef.current = null;
-          handleScanResult(decodedText);
-        }
-      };
+      scanner.render(
+        (decodedText) => {
+          if (scannerRef.current) handleScanResult(decodedText);
+        },
+        () => {}
+      );
 
-      scanner.render(onScanSuccess);
       scannerRef.current = scanner;
     }
   }, [open, scanMode, handleScanResult]);
@@ -314,15 +375,15 @@ const QrScannerModal = ({
   const handleFileChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
     try {
-      const html5QrCode = new Html5Qrcode("qr-reader-modal");
+      const html5QrCode = new Html5Qrcode("qr-reader-modal-file-hidden");
       const result = await html5QrCode.scanFile(file, false);
       handleScanResult(result);
     } catch (err) {
-      setInfoMessage(
-        "Gagal memindai QR code dari gambar. Pastikan gambar jelas."
-      );
+      setInfoMessage({
+        type: "error",
+        text: "Gagal memindai QR code dari gambar.",
+      });
       onModalClose();
     }
   };
@@ -373,24 +434,127 @@ const QrScannerModal = ({
         <Box
           id="qr-reader-modal"
           sx={{
-            width: "100%",
-            mx: "auto",
-            "& > div": {
-              border: "none !important",
-              borderRadius: "12px !important",
-            },
             display: scanMode === "camera" ? "block" : "none",
+            "& > div": { border: "none !important" },
           }}
         />
+        <Box id="qr-reader-modal-file-hidden" sx={{ display: "none" }} />
       </DialogContent>
       {scanMode === "camera" && (
         <DialogActions>
-          <Button onClick={() => setScanMode("select")}>Kembali</Button>
+          <Button
+            onClick={() => {
+              if (scannerRef.current) {
+                scannerRef.current
+                  .clear()
+                  .catch((err) =>
+                    console.error("Gagal membersihkan scanner.", err)
+                  );
+                scannerRef.current = null;
+              }
+              setScanMode("select");
+            }}
+          >
+            Kembali
+          </Button>
         </DialogActions>
       )}
     </Dialog>
   );
 };
+
+// --- KOMPONEN UTAMA: DASHBOARD ---
+export function PresenceDashboard() {
+  const [presenceStatus, setPresenceStatus] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [infoMessage, setInfoMessage] = useState({ type: "", text: "" });
+
+  const fetchPresenceStatus = useCallback(async () => {
+    setLoading(true);
+    try {
+      const savedStatus = localStorage.getItem("presenceStatus");
+      if (savedStatus) {
+        setPresenceStatus(JSON.parse(savedStatus));
+      } else {
+        const initialStatus = {
+          status: "belum_absen",
+          waktu_masuk: null,
+          waktu_pulang: null,
+        };
+        setPresenceStatus(initialStatus);
+        localStorage.setItem("presenceStatus", JSON.stringify(initialStatus));
+      }
+    } catch (error) {
+      setInfoMessage({ type: "error", text: "Gagal memuat status kehadiran." });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const submitPresenceScan = async (qrData) => {
+    setIsModalOpen(false);
+    setLoading(true);
+
+    const saved = localStorage.getItem("presenceStatus");
+    const currentStatus = saved ? JSON.parse(saved) : { status: "belum_absen" };
+
+    let newStatus;
+    if (!currentStatus.waktu_masuk) {
+      newStatus = {
+        status: "hadir",
+        waktu_masuk: new Date().toISOString(),
+        waktu_pulang: null,
+      };
+      setInfoMessage({
+        type: "success",
+        text: "Absen masuk berhasil dicatat!",
+      });
+    } else {
+      newStatus = { ...currentStatus, waktu_pulang: new Date().toISOString() };
+      setInfoMessage({
+        type: "success",
+        text: "Absen pulang berhasil dicatat!",
+      });
+    }
+
+    localStorage.setItem("presenceStatus", JSON.stringify(newStatus));
+    setPresenceStatus(newStatus);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchPresenceStatus();
+  }, [fetchPresenceStatus]);
+
+  return (
+    <Box sx={{ p: 4, maxWidth: 400, mx: "auto" }}>
+      {infoMessage.text && (
+        <Alert
+          severity={infoMessage.type || "info"}
+          onClose={() => setInfoMessage({ type: "", text: "" })}
+          sx={{ mb: 2 }}
+        >
+          {infoMessage.text}
+        </Alert>
+      )}
+      <PresenceCard
+        status={presenceStatus}
+        onOpenModal={() => setIsModalOpen(true)}
+        loading={loading}
+      />
+      <QrScannerModal
+        open={isModalOpen}
+        handleClose={() => setIsModalOpen(false)}
+        handleScanResult={submitPresenceScan}
+        setInfoMessage={setInfoMessage}
+      />
+    </Box>
+  );
+}
+
+// --- KOMPONEN UTAMA (PENGELOLA STATE) ---
+// (Removed duplicate default export App component)
 
 const QuickStats = ({ jadwal, isPresent, currentTime, onStatusChange }) => {
   const currentSchedule = jadwal.find((j) => {
@@ -571,7 +735,7 @@ function Dashboard() {
   const [jadwal, setJadwal] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
-  const [isPresent, setIsPresent] = useState(false);
+  const [presenceStatus, setPresenceStatus] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [notification, setNotification] = useState({
     open: false,
@@ -626,30 +790,30 @@ function Dashboard() {
   };
 
   const fetchInitialData = useCallback(async () => {
-  if (!token) return;
-  setLoading(true);
-  
-  // ✅ Definisikan URL API secara dinamis
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    if (!token) return;
+    setLoading(true);
 
-  try {
-    const headers = { headers: { Authorization: `Bearer ${token}` } };
-    
-    // ✅ Gunakan variabel API_URL di kedua panggilan
-    const [jadwalRes, presensiRes] = await Promise.all([
-      axios.get(`${API_URL}/api/jadwal/saya`, headers),
-      axios.get(`${API_URL}/api/presensi/status`, headers),
-    ]);
-    
-    setJadwal(jadwalRes.data);
-    setIsPresent(presensiRes.data.isPresent);
-  } catch (error) {
-    console.error("Gagal mengambil data awal:", error);
-    setMessage("Gagal memuat data. Periksa koneksi Anda.");
-  } finally {
-    setLoading(false);
-  }
-}, [token]); // Dependency array sudah benar
+    // ✅ Definisikan URL API secara dinamis
+    const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+    try {
+      const headers = { headers: { Authorization: `Bearer ${token}` } };
+
+      // ✅ Gunakan variabel API_URL di kedua panggilan
+      const [jadwalRes, presensiRes] = await Promise.all([
+        axios.get(`${API_URL}/api/jadwal/saya`, headers),
+        axios.get(`${API_URL}/api/presensi/status`, headers),
+      ]);
+
+      setJadwal(jadwalRes.data);
+      setPresenceStatus(presensiRes.data);
+    } catch (error) {
+      console.error("Gagal mengambil data awal:", error);
+      setMessage("Gagal memuat data. Periksa koneksi Anda.");
+    } finally {
+      setLoading(false);
+    }
+  }, [token]); // Dependency array sudah benar
 
   useEffect(() => {
     if (token) {
@@ -659,38 +823,36 @@ function Dashboard() {
   }, [token, fetchInitialData]);
 
   const handleScanResult = useCallback(
-  async (scannedData) => { // ✅ Jadikan fungsi ini async
-    setIsModalOpen(false);
+    async (scannedData) => {
+      // ✅ Jadikan fungsi ini async
+      setIsModalOpen(false);
 
-    // ✅ Definisikan URL API secara dinamis
-    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      // ✅ Definisikan URL API secara dinamis
+      const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
-    // ✅ Gunakan try...catch untuk penanganan error yang lebih bersih
-    try {
-      const response = await axios.post(
-        `${API_URL}/api/presensi/scan`, // ✅ Gunakan variabel API_URL
-        { qrData: scannedData },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      // ✅ Gunakan try...catch untuk penanganan error yang lebih bersih
+      try {
+        const response = await axios.post(
+          `${API_URL}/api/presensi/scan`, // ✅ Gunakan variabel API_URL
+          { qrData: scannedData },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
 
-      // Logika sukses di dalam try
-      setMessage(response.data.message);
-      alert(response.data.message);
-      setIsPresent(true);
-
-    } catch (err) {
-      // Logika error di dalam catch
-      const errorMessage =
-        err.response?.data?.message || "Gagal melakukan presensi.";
-      setMessage(errorMessage);
-      alert(errorMessage);
-      if (err.response?.status === 409) {
-        setIsPresent(true); // 409 = Conflict (sudah absen)
+        // Logika sukses di dalam try
+        setMessage(response.data.message);
+        alert(response.data.message);
+        fetchInitialData();
+      } catch (err) {
+        // Logika error di dalam catch
+        const errorMessage =
+          err.response?.data?.message || "Gagal melakukan presensi.";
+        setMessage(errorMessage);
+        alert(errorMessage);
+        // 409 = Conflict (sudah absen)
       }
-    }
-  },
-  [token] // Dependency array sudah benar
-);
+    },
+    [token] // Dependency array sudah benar
+  );
 
   // useEffect untuk scanner tidak berubah
   useEffect(() => {
@@ -746,23 +908,23 @@ function Dashboard() {
   };
   // Fungsi BARU untuk menangani perubahan status manual
   const handleManualPresence = async (status) => {
-  try {
-    // ✅ Definisikan URL API secara dinamis
-    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-    
-    // ✅ Gunakan variabel API_URL saat memanggil axios
-    const response = await axios.post(
-      `${API_URL}/api/presensi/manual`,
-      { status },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    
-    alert(response.data.message);
-    fetchInitialData(); // Ambil ulang data untuk memperbarui dasbor
-  } catch (error) {
-    alert(error.response?.data?.error || "Gagal memperbarui status.");
-  }
-};
+    try {
+      // ✅ Definisikan URL API secara dinamis
+      const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+      // ✅ Gunakan variabel API_URL saat memanggil axios
+      const response = await axios.post(
+        `${API_URL}/api/presensi/manual`,
+        { status },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      alert(response.data.message);
+      fetchInitialData(); // Ambil ulang data untuk memperbarui dasbor
+    } catch (error) {
+      alert(error.response?.data?.error || "Gagal memperbarui status.");
+    }
+  };
   const handleLogout = () => {
     localStorage.removeItem("token");
     window.location.href = "/login";
@@ -871,10 +1033,10 @@ function Dashboard() {
               <Grid item xs={12} sm={6} md={4} sx={{ px: 3 }}>
                 <StatCard
                   title="Status Presensi"
-                  value={isPresent ? "Hadir" : "Belum Hadir"}
+                  value={presenceStatus?.waktu_masuk ? "Hadir" : "Belum Hadir"}
                   icon={<EventAvailableIcon sx={{ fontSize: 32 }} />}
                   gradient={
-                    isPresent
+                    presenceStatus?.waktu_masuk
                       ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
                       : "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
                   }
@@ -889,7 +1051,11 @@ function Dashboard() {
               <UserProfileCard user={user} currentTime={currentTime} />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-              <PresenceCard onOpenModal={() => setIsModalOpen(true)} />
+              <PresenceCard
+                status={presenceStatus}
+                loading={loading}
+                onOpenModal={() => setIsModalOpen(true)}
+              />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <DailyProgress jadwal={jadwal} />
@@ -897,7 +1063,7 @@ function Dashboard() {
             <Grid item xs={12} sm={6} md={3}>
               <QuickStats
                 jadwal={jadwal}
-                isPresent={isPresent}
+                isPresent={!!presenceStatus?.waktu_masuk}
                 currentTime={currentTime}
                 onStatusChange={handleManualPresence}
               />
