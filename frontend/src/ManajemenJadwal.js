@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 
 // Import komponen MUI
 import {
@@ -151,6 +154,14 @@ function ManajemenJadwal() {
   const [error, setError] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const token = localStorage.getItem("token");
+  dayjs.extend(utc);
+dayjs.extend(timezone);
+
+// Contoh fungsi
+const formatWIBTime = (waktu) => {
+  return dayjs.utc(waktu).tz("Asia/Jakarta").format("DD MMM YYYY, HH:mm");
+};
+
 
   const fetchData = async () => {
     setLoading(true);
@@ -304,18 +315,7 @@ function ManajemenJadwal() {
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" color="text.secondary">
-                        {window.location.hostname === "localhost"
-                          ? new Date(item.waktu_mulai).toLocaleString("id-ID", {
-                              dateStyle: "medium",
-                              timeStyle: "short",
-                            })
-                          : new Date(
-                              item.waktu_mulai.replace(" ", "T")
-                            ).toLocaleString("id-ID", {
-                              dateStyle: "medium",
-                              timeStyle: "short",
-                              timeZone: "Asia/Jakarta",
-                            })}
+                        {formatWIBTime(item.waktu_mulai)}
                       </Typography>
                     </TableCell>
                     <TableCell>
