@@ -1,11 +1,10 @@
-require('dotenv').config(); // harus paling atas sebelum akses process.env
+require('dotenv').config(); // Harus paling atas
 
 const express = require('express');
 const cors = require('cors');
 const db = require('./db'); // Impor untuk cek koneksi saat start
 
-
-// 1. Impor semua rute di satu tempat
+// 1. Impor semua rute
 const userRoutes = require('./routes/gurus');
 const authRoutes = require('./routes/auth');
 const qrCodeRoutes = require('./routes/qrcode');
@@ -39,5 +38,10 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
   console.log(`Server berjalan di http://localhost:${port}`);
 });
+
+// [✅ Tambahkan ini agar cron & notifikasi aktif otomatis]
+require('./services/notificationService');
+
+// (Opsional) Debug env
 console.log("DB_PASSWORD type:", typeof process.env.DB_PASSWORD);
 console.log("DB_PASSWORD value:", process.env.DB_PASSWORD);
