@@ -304,10 +304,12 @@ function ManajemenJadwal() {
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" color="text.secondary">
-                        {new Date(item.waktu_mulai).toLocaleString("id-ID", {
+                        {new Date(
+                          item.waktu_mulai.replace(" ", "T")
+                        ).toLocaleString("id-ID", {
                           dateStyle: "medium",
                           timeStyle: "short",
-                          timeZone: "Asia/Jakarta", // WIB (UTC+7)
+                          timeZone: "Asia/Jakarta", // memastikan tetap WIB
                         })}
                       </Typography>
                     </TableCell>
