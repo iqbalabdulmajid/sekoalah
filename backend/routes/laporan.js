@@ -6,12 +6,13 @@ const { protect } = require('../middleware/auth');
 router.get('/presensi', protect, async (req, res) => {
   const { guru_id } = req.query;
 
-  // Query dasar
+  // ✅ FIX: Query diubah untuk mengambil kolom 'waktu_masuk' dan 'waktu_pulang'
   let sql = `
     SELECT
       absensi.id,
       absensi.tanggal,
-      absensi.waktu_presensi,
+      absensi.waktu_masuk,
+      absensi.waktu_pulang,
       absensi.status,
       guru.nama as nama_guru
     FROM absensi
@@ -22,14 +23,14 @@ router.get('/presensi', protect, async (req, res) => {
 
   // Jika ada filter guru_id dan bukan 'all', tambahkan klausa WHERE
   if (guru_id && guru_id !== 'all') {
-    // ✅ Gunakan placeholder $1 untuk PostgreSQL
+    // Gunakan placeholder $1 untuk PostgreSQL
     sql += ' WHERE absensi.guru_id = $1';
     params.push(guru_id);
   }
 
   sql += ' ORDER BY absensi.tanggal DESC, guru.nama ASC';
 
-  // ✅ Tambahkan log ini untuk debugging
+  // Tambahkan log ini untuk debugging
   console.log("Executing SQL:", sql);
   console.log("With Params:", params);
 

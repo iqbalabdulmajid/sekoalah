@@ -3,6 +3,7 @@ import axios from "axios";
 import { useReactToPrint } from "react-to-print";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import dayjs from "dayjs";
 
 // MUI Components
 import {
@@ -28,6 +29,17 @@ import {
 import PrintIcon from "@mui/icons-material/Print";
 import DownloadIcon from "@mui/icons-material/Download";
 
+// Fungsi helper untuk memformat waktu, akan digunakan di beberapa tempat
+const formatTimeManual = (waktu) => {
+  if (!waktu) return "-";
+  const isLocalhost =
+    typeof window !== "undefined" && window.location.hostname === "localhost";
+  const time = dayjs.utc(waktu); // Supabase biasanya simpan dalam UTC
+  const adjusted = isLocalhost ? time.add(7, "hour") : time;
+  return adjusted.format("HH:mm");
+};
+
+
 // Komponen khusus untuk dicetak
 const ComponentToPrint = React.forwardRef(({ laporan, filter }, ref) => (
   <div ref={ref} style={{ padding: "20px" }}>
@@ -43,6 +55,9 @@ const ComponentToPrint = React.forwardRef(({ laporan, filter }, ref) => (
           <TableRow>
             <TableCell sx={{ fontWeight: "bold" }}>Nama Guru</TableCell>
             <TableCell sx={{ fontWeight: "bold" }}>Tanggal</TableCell>
+            {/* ✅ FIX: Menambahkan kolom Waktu Masuk dan Pulang */}
+            <TableCell sx={{ fontWeight: "bold" }}>Waktu Masuk</TableCell>
+            <TableCell sx={{ fontWeight: "bold" }}>Waktu Pulang</TableCell>
             <TableCell align="center" sx={{ fontWeight: "bold" }}>
               Status
             </TableCell>
@@ -60,6 +75,9 @@ const ComponentToPrint = React.forwardRef(({ laporan, filter }, ref) => (
                     day: "numeric",
                   })}
                 </TableCell>
+                {/* ✅ FIX: Menampilkan waktu masuk dan pulang */}
+                <TableCell>{formatTimeManual(item.waktu_masuk)}</TableCell>
+                <TableCell>{formatTimeManual(item.waktu_pulang)}</TableCell>
                 <TableCell align="center" sx={{ textTransform: "capitalize" }}>
                   {item.status}
                 </TableCell>
@@ -67,7 +85,7 @@ const ComponentToPrint = React.forwardRef(({ laporan, filter }, ref) => (
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={3} align="center">
+              <TableCell colSpan={5} align="center">
                 Tidak ada data.
               </TableCell>
             </TableRow>
@@ -87,19 +105,17 @@ function LaporanPresensi() {
   const token = localStorage.getItem("token");
   const componentRef = useRef();
 
-  // ✅ Definisikan URL API secara dinamis di satu tempat
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-  // Fungsi cetak PDF (tidak berubah)
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
     documentTitle: "Laporan-Presensi",
   });
 
-  // Fungsi ekspor ke Excel (tidak berubah)
   const exportToExcel = () => {
     if (laporan.length === 0) return;
 
+    // ✅ FIX: Mengubah data ekspor untuk menyertakan waktu masuk dan pulang
     const dataToExport = laporan.map((item) => ({
       "Nama Guru": item.nama_guru,
       "Tanggal": new Date(item.tanggal).toLocaleDateString("id-ID", {
@@ -107,12 +123,8 @@ function LaporanPresensi() {
         month: "long",
         day: "numeric",
       }),
-      "Jam Presensi": item.waktu_presensi
-        ? new Date(item.waktu_presensi).toLocaleTimeString("id-ID", {
-            hour: "2-digit",
-            minute: "2-digit",
-          })
-        : "-",
+      "Waktu Masuk": formatTimeManual(item.waktu_masuk),
+      "Waktu Pulang": formatTimeManual(item.waktu_pulang),
       "Status": item.status,
     }));
 
@@ -125,12 +137,10 @@ function LaporanPresensi() {
     saveAs(dataBlob, `Laporan_Presensi_${Date.now()}.xlsx`);
   };
 
-  // useEffect untuk mengambil data guru
   useEffect(() => {
     const fetchGurus = async () => {
-      if (!token) return; // Jangan fetch jika tidak ada token
+      if (!token) return;
       try {
-        // ✅ Gunakan variabel API_URL
         const response = await axios.get(`${API_URL}/api/gurus`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -140,16 +150,14 @@ function LaporanPresensi() {
       }
     };
     fetchGurus();
-  }, [token, API_URL]); // Tambahkan API_URL ke dependency array
+  }, [token, API_URL]);
 
-  // useEffect untuk mengambil data laporan
   useEffect(() => {
     const fetchLaporan = async () => {
-      if (!token) return; // Jangan fetch jika tidak ada token
+      if (!token) return;
       setLoading(true);
       setError("");
       try {
-        // ✅ Gunakan variabel API_URL
         const response = await axios.get(
           `${API_URL}/api/laporan/presensi?guru_id=${selectedGuru}`,
           {
@@ -165,7 +173,7 @@ function LaporanPresensi() {
       }
     };
     fetchLaporan();
-  }, [token, selectedGuru, API_URL]); // Tambahkan API_URL ke dependency array
+  }, [token, selectedGuru, API_URL]);
 
   const handleFilterChange = (event) => {
     setSelectedGuru(event.target.value);
@@ -244,7 +252,6 @@ function LaporanPresensi() {
         </Alert>
       )}
 
-      {/* Komponen tersembunyi untuk dicetak */}
       <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
         <ComponentToPrint
           ref={componentRef}
@@ -253,7 +260,6 @@ function LaporanPresensi() {
         />
       </div>
 
-      {/* Tabel utama */}
       <Card
         elevation={0}
         sx={{ borderRadius: "12px", border: "1px solid #e3e6f0" }}
@@ -264,7 +270,9 @@ function LaporanPresensi() {
               <TableRow sx={{ bgcolor: "#f8f9fc" }}>
                 <TableCell sx={{ fontWeight: "600" }}>Nama Guru</TableCell>
                 <TableCell sx={{ fontWeight: "600" }}>Tanggal</TableCell>
-                <TableCell sx={{ fontWeight: "600" }}>Jam Presensi</TableCell>
+                {/* ✅ FIX: Menambahkan kolom Waktu Masuk dan Pulang */}
+                <TableCell sx={{ fontWeight: "600" }}>Waktu Masuk</TableCell>
+                <TableCell sx={{ fontWeight: "600" }}>Waktu Pulang</TableCell>
                 <TableCell align="center" sx={{ fontWeight: "600" }}>
                   Status
                 </TableCell>
@@ -273,7 +281,7 @@ function LaporanPresensi() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={3} align="center">
+                  <TableCell colSpan={5} align="center">
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
@@ -288,15 +296,9 @@ function LaporanPresensi() {
                         day: "numeric",
                       })}
                     </TableCell>
-                    {/* jam absensi */}
-                    <TableCell align="center">
-                      {item.waktu_presensi
-                        ? new Date(item.waktu_presensi).toLocaleTimeString("id-ID", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : "-"}
-                    </TableCell>
+                    {/* ✅ FIX: Menampilkan waktu masuk dan pulang */}
+                    <TableCell>{formatTimeManual(item.waktu_masuk)}</TableCell>
+                    <TableCell>{formatTimeManual(item.waktu_pulang)}</TableCell>
                     <TableCell align="center">
                       <Chip
                         label={item.status}
@@ -309,7 +311,7 @@ function LaporanPresensi() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={3} align="center">
+                  <TableCell colSpan={5} align="center">
                     <Typography variant="body2">
                       Tidak ada data yang cocok dengan filter ini.
                     </Typography>
