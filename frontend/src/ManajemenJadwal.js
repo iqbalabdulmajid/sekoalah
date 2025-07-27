@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 // Import komponen MUI
@@ -23,14 +23,10 @@ import {
   MenuItem,
   CircularProgress,
   Alert,
-  Tooltip,
-  Stack
+  Tooltip
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
-
-// Definisikan URL API di satu tempat untuk kemudahan pengelolaan
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 // Komponen Form terpisah untuk kerapian
 function JadwalForm({ open, onClose, onSuccess, gurus }) {
@@ -41,7 +37,6 @@ function JadwalForm({ open, onClose, onSuccess, gurus }) {
     waktu_selesai: ''
   });
   const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -61,118 +56,85 @@ function JadwalForm({ open, onClose, onSuccess, gurus }) {
   };
 
   const handleSubmit = async () => {
-    // Validasi sederhana
-    if (!formData.guru_id || !formData.mata_pelajaran || !formData.waktu_mulai || !formData.waktu_selesai) {
-        setError('Semua kolom wajib diisi.');
-        return;
-    }
+  setError('');
+  const token = localStorage.getItem('token');
+  
+  // ✅ Definisikan URL API secara dinamis
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-    setError('');
-    setIsSubmitting(true);
-    const token = localStorage.getItem('token');
+  try {
+    // ✅ Gunakan variabel API_URL saat memanggil axios
+    await axios.post(`${API_URL}/api/jadwal`, formData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     
-    // ✅ FIX: Konversi waktu dari input 'datetime-local' ke format ISO UTC.
-    // Ini memastikan backend menerima waktu yang benar (dalam UTC) terlepas dari
-    // zona waktu server, sehingga saat ditampilkan kembali akan sesuai dengan waktu lokal Indonesia.
-    const dataToSend = {
-        ...formData,
-        waktu_mulai: new Date(formData.waktu_mulai).toISOString(),
-        waktu_selesai: new Date(formData.waktu_selesai).toISOString(),
-    };
-
-    try {
-      await axios.post(`${API_URL}/api/jadwal`, dataToSend, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      onSuccess(); // Panggil fungsi callback untuk refresh data
-      onClose();   // Tutup modal/dialog
-    } catch (err) {
-      setError(err.response?.data?.error || 'Gagal membuat jadwal.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    onSuccess(); // Panggil fungsi callback untuk refresh data
+    onClose();   // Tutup modal/dialog
+  } catch (err) {
+    setError(err.response?.data?.error || 'Gagal membuat jadwal.');
+  }
+};
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>Buat Jadwal Baru</DialogTitle>
       <DialogContent>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-        <Stack spacing={2} sx={{ pt: 1 }}>
-          <TextField
-            select
-            name="guru_id"
-            label="Pilih Guru"
-            fullWidth
-            variant="outlined"
-            value={formData.guru_id}
-            onChange={handleChange}
-          >
-            <MenuItem value="">-- Tidak ada yang dipilih --</MenuItem>
-            {gurus.map(guru => (
-              <MenuItem key={guru.id} value={guru.id}>{guru.nama}</MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            name="mata_pelajaran"
-            label="Mata Pelajaran"
-            type="text"
-            fullWidth
-            variant="outlined"
-            value={formData.mata_pelajaran}
-            onChange={handleChange}
-          />
-          <TextField
-            name="waktu_mulai"
-            label="Waktu Mulai"
-            type="datetime-local"
-            fullWidth
-            variant="outlined"
-            value={formData.waktu_mulai}
-            onChange={handleChange}
-            InputLabelProps={{ shrink: true }}
-          />
-          <TextField
-            name="waktu_selesai"
-            label="Waktu Selesai"
-            type="datetime-local"
-            fullWidth
-            variant="outlined"
-            value={formData.waktu_selesai}
-            onChange={handleChange}
-            InputLabelProps={{ shrink: true }}
-          />
-        </Stack>
+        <TextField
+          select
+          margin="dense"
+          name="guru_id"
+          label="Pilih Guru"
+          fullWidth
+          variant="outlined"
+          value={formData.guru_id}
+          onChange={handleChange}
+        >
+          <MenuItem value="">-- Tidak ada yang dipilih --</MenuItem>
+          {gurus.map(guru => (
+            <MenuItem key={guru.id} value={guru.id}>{guru.nama}</MenuItem>
+          ))}
+        </TextField>
+        <TextField
+          margin="dense"
+          name="mata_pelajaran"
+          label="Mata Pelajaran"
+          type="text"
+          fullWidth
+          variant="outlined"
+          value={formData.mata_pelajaran}
+          onChange={handleChange}
+        />
+        <TextField
+          margin="dense"
+          name="waktu_mulai"
+          label="Waktu Mulai"
+          type="datetime-local"
+          fullWidth
+          variant="outlined"
+          value={formData.waktu_mulai}
+          onChange={handleChange}
+          InputLabelProps={{ shrink: true }}
+        />
+        <TextField
+          margin="dense"
+          name="waktu_selesai"
+          label="Waktu Selesai"
+          type="datetime-local"
+          fullWidth
+          variant="outlined"
+          value={formData.waktu_selesai}
+          onChange={handleChange}
+          InputLabelProps={{ shrink: true }}
+        />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={isSubmitting}>Batal</Button>
-        <Button onClick={handleSubmit} variant="contained" disabled={isSubmitting}>
-            {isSubmitting ? <CircularProgress size={24} /> : 'Simpan Jadwal'}
-        </Button>
+        <Button onClick={onClose}>Batal</Button>
+        <Button onClick={handleSubmit} variant="contained">Simpan Jadwal</Button>
       </DialogActions>
     </Dialog>
   );
 }
-
-// Komponen baru untuk dialog konfirmasi hapus
-function ConfirmationDialog({ open, onClose, onConfirm, title, content }) {
-    return (
-        <Dialog open={open} onClose={onClose}>
-            <DialogTitle>{title}</DialogTitle>
-            <DialogContent>
-                <Typography>{content}</Typography>
-            </DialogContent>
-            <DialogActions>
-                <Button onClick={onClose}>Batal</Button>
-                <Button onClick={onConfirm} color="error" autoFocus>
-                    Hapus
-                </Button>
-            </DialogActions>
-        </Dialog>
-    );
-}
-
 
 function ManajemenJadwal() {
   const [jadwal, setJadwal] = useState([]);
@@ -180,54 +142,56 @@ function ManajemenJadwal() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [formOpen, setFormOpen] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null });
-  
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    const token = localStorage.getItem('token');
+  const token = localStorage.getItem('token');
 
-    try {
-      const headers = { headers: { Authorization: `Bearer ${token}` } };
-      
-      const [jadwalRes, guruRes] = await Promise.all([
-        axios.get(`${API_URL}/api/jadwal`, headers),
-        axios.get(`${API_URL}/api/gurus`, headers)
-      ]);
+  const fetchData = async () => {
+  setLoading(true);
+  setError('');
 
-      setJadwal(jadwalRes.data);
-      setGurus(guruRes.data);
-    } catch (err) {
-      setError('Gagal memuat data dari server.');
-      console.error('Gagal mengambil data', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  try {
+    // ✅ Definisikan URL API secara dinamis
+    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    const headers = { headers: { Authorization: `Bearer ${token}` } };
+    
+    // ✅ Gunakan variabel API_URL di kedua panggilan
+    const [jadwalRes, guruRes] = await Promise.all([
+      axios.get(`${API_URL}/api/jadwal`, headers),
+      axios.get(`${API_URL}/api/gurus`, headers)
+    ]);
+
+    setJadwal(jadwalRes.data);
+    setGurus(guruRes.data);
+  } catch (err) {
+    setError('Gagal memuat data dari server.');
+    console.error('Gagal mengambil data', err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, []);
 
-  const handleDeleteClick = (jadwalId) => {
-    setConfirmDelete({ open: true, id: jadwalId });
-  };
-
-  const executeDelete = async () => {
-    const jadwalId = confirmDelete.id;
+  const handleDelete = async (jadwalId) => {
+  if (window.confirm('Apakah Anda yakin ingin menghapus jadwal ini?')) {
     try {
-      const token = localStorage.getItem('token');
+      // ✅ Definisikan URL API secara dinamis
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      
+      // ✅ Gunakan variabel API_URL saat memanggil axios
       await axios.delete(`${API_URL}/api/jadwal/${jadwalId}`, { 
         headers: { Authorization: `Bearer ${token}` } 
       });
       
-      setConfirmDelete({ open: false, id: null }); // Tutup dialog
-      fetchData(); // Refresh data
+      // Panggil fetchData untuk memperbarui daftar setelah hapus
+      fetchData();
     } catch (err) {
       setError('Gagal menghapus jadwal.');
       console.error(err);
     }
-  };
+  }
+};
 
   return (
     <Box>
@@ -245,21 +209,13 @@ function ManajemenJadwal() {
         </Button>
       </Box>
       
-      {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       <JadwalForm 
         open={formOpen}
         onClose={() => setFormOpen(false)}
         onSuccess={fetchData}
         gurus={gurus}
-      />
-
-      <ConfirmationDialog
-        open={confirmDelete.open}
-        onClose={() => setConfirmDelete({ open: false, id: null })}
-        onConfirm={executeDelete}
-        title="Konfirmasi Hapus"
-        content="Apakah Anda yakin ingin menghapus jadwal ini? Tindakan ini tidak dapat dibatalkan."
       />
 
       <Card elevation={0} sx={{ borderRadius: '12px', border: '1px solid #e3e6f0' }}>
@@ -277,7 +233,7 @@ function ManajemenJadwal() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 5 }}>
+                  <TableCell colSpan={5} align="center">
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
@@ -306,7 +262,7 @@ function ManajemenJadwal() {
                     </TableCell>
                     <TableCell align="center">
                       <Tooltip title="Hapus Jadwal">
-                        <IconButton size="small" onClick={() => handleDeleteClick(item.id)}>
+                        <IconButton size="small" onClick={() => handleDelete(item.id)}>
                           <DeleteIcon color="error" />
                         </IconButton>
                       </Tooltip>
