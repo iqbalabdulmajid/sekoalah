@@ -35,7 +35,7 @@ dayjs.extend(timezone);
 // ✅ Format waktu tergantung environment (local vs vercel)
 const formatTimeByEnv = (waktu) => {
   const isLocalhost = typeof window !== "undefined" && window.location.hostname === "localhost";
-  const timezone = isLocalhost ? "Asia/Jakarta" : "Etc/GMT+7"; // UTC-7
+  const timezone = isLocalhost ? "Asia/Jakarta" : "Asia/Jakarta"; // UTC-7
   return dayjs.utc(waktu).tz(timezone).format("DD MMM YYYY, HH:mm");
 };
 
