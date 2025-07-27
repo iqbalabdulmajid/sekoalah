@@ -1,10 +1,9 @@
+// src/pages/ManajemenJadwal.js
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
-
-// Import komponen MUI
 import {
   Box,
   Typography,
@@ -31,7 +30,19 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 
-// Komponen Form terpisah untuk kerapian
+// Extend dayjs with UTC and timezone
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+// Import komponen MUI
+
+
+// Fungsi format waktu ke zona Asia/Jakarta
+const formatWIBTime = (waktu) => {
+  return dayjs.utc(waktu).tz("Asia/Jakarta").format("DD MMM YYYY, HH:mm");
+};
+
+// Komponen Form
 function JadwalForm({ open, onClose, onSuccess, gurus }) {
   const [formData, setFormData] = useState({
     guru_id: "",
@@ -43,7 +54,6 @@ function JadwalForm({ open, onClose, onSuccess, gurus }) {
 
   useEffect(() => {
     if (open) {
-      // Reset form setiap kali dialog dibuka
       setFormData({
         guru_id: "",
         mata_pelajaran: "",
@@ -61,18 +71,14 @@ function JadwalForm({ open, onClose, onSuccess, gurus }) {
   const handleSubmit = async () => {
     setError("");
     const token = localStorage.getItem("token");
-
-    // ✅ Definisikan URL API secara dinamis
     const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
     try {
-      // ✅ Gunakan variabel API_URL saat memanggil axios
       await axios.post(`${API_URL}/api/jadwal`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      onSuccess(); // Panggil fungsi callback untuk refresh data
-      onClose(); // Tutup modal/dialog
+      onSuccess();
+      onClose();
     } catch (err) {
       setError(err.response?.data?.error || "Gagal membuat jadwal.");
     }
@@ -82,11 +88,7 @@ function JadwalForm({ open, onClose, onSuccess, gurus }) {
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>Buat Jadwal Baru</DialogTitle>
       <DialogContent>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         <TextField
           select
           margin="dense"
@@ -99,9 +101,7 @@ function JadwalForm({ open, onClose, onSuccess, gurus }) {
         >
           <MenuItem value="">-- Tidak ada yang dipilih --</MenuItem>
           {gurus.map((guru) => (
-            <MenuItem key={guru.id} value={guru.id}>
-              {guru.nama}
-            </MenuItem>
+            <MenuItem key={guru.id} value={guru.id}>{guru.nama}</MenuItem>
           ))}
         </TextField>
         <TextField
@@ -139,9 +139,7 @@ function JadwalForm({ open, onClose, onSuccess, gurus }) {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Batal</Button>
-        <Button onClick={handleSubmit} variant="contained">
-          Simpan Jadwal
-        </Button>
+        <Button onClick={handleSubmit} variant="contained">Simpan Jadwal</Button>
       </DialogActions>
     </Dialog>
   );
@@ -154,25 +152,15 @@ function ManajemenJadwal() {
   const [error, setError] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const token = localStorage.getItem("token");
-  dayjs.extend(utc);
-dayjs.extend(timezone);
-
-// Contoh fungsi
-const formatWIBTime = (waktu) => {
-  return dayjs.utc(waktu).tz("Asia/Jakarta").format("DD MMM YYYY, HH:mm");
-};
-
 
   const fetchData = async () => {
     setLoading(true);
     setError("");
 
     try {
-      // ✅ Definisikan URL API secara dinamis
       const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
       const headers = { headers: { Authorization: `Bearer ${token}` } };
 
-      // ✅ Gunakan variabel API_URL di kedua panggilan
       const [jadwalRes, guruRes] = await Promise.all([
         axios.get(`${API_URL}/api/jadwal`, headers),
         axios.get(`${API_URL}/api/gurus`, headers),
@@ -195,16 +183,10 @@ const formatWIBTime = (waktu) => {
   const handleDelete = async (jadwalId) => {
     if (window.confirm("Apakah Anda yakin ingin menghapus jadwal ini?")) {
       try {
-        // ✅ Definisikan URL API secara dinamis
-        const API_URL =
-          process.env.REACT_APP_API_URL || "http://localhost:5000";
-
-        // ✅ Gunakan variabel API_URL saat memanggil axios
+        const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
         await axios.delete(`${API_URL}/api/jadwal/${jadwalId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-
-        // Panggil fetchData untuk memperbarui daftar setelah hapus
         fetchData();
       } catch (err) {
         setError("Gagal menghapus jadwal.");
@@ -215,82 +197,34 @@ const formatWIBTime = (waktu) => {
 
   return (
     <Box>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 3,
-        }}
-      >
-        <Typography
-          variant="h4"
-          component="h1"
-          sx={{ fontWeight: "bold", color: "#5a5c69" }}
-        >
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+        <Typography variant="h4" component="h1" sx={{ fontWeight: "bold", color: "#5a5c69" }}>
           Manajemen Jadwal
         </Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => setFormOpen(true)}
-          sx={{
-            textTransform: "none",
-            fontWeight: "bold",
-            boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-          }}
+          sx={{ textTransform: "none", fontWeight: "bold", boxShadow: "0 4px 6px rgba(0,0,0,0.1)" }}
         >
           Buat Jadwal
         </Button>
       </Box>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      <JadwalForm
-        open={formOpen}
-        onClose={() => setFormOpen(false)}
-        onSuccess={fetchData}
-        gurus={gurus}
-      />
+      <JadwalForm open={formOpen} onClose={() => setFormOpen(false)} onSuccess={fetchData} gurus={gurus} />
 
-      <Card
-        elevation={0}
-        sx={{ borderRadius: "12px", border: "1px solid #e3e6f0" }}
-      >
+      <Card elevation={0} sx={{ borderRadius: "12px", border: "1px solid #e3e6f0" }}>
         <TableContainer>
           <Table sx={{ minWidth: 650 }} aria-label="Tabel Jadwal">
             <TableHead>
               <TableRow sx={{ bgcolor: "#f8f9fc" }}>
-                <TableCell
-                  sx={{ fontWeight: "600", color: "text.secondary", border: 0 }}
-                >
-                  Nama Guru
-                </TableCell>
-                <TableCell
-                  sx={{ fontWeight: "600", color: "text.secondary", border: 0 }}
-                >
-                  Mata Pelajaran
-                </TableCell>
-                <TableCell
-                  sx={{ fontWeight: "600", color: "text.secondary", border: 0 }}
-                >
-                  Waktu Mulai
-                </TableCell>
-                <TableCell
-                  sx={{ fontWeight: "600", color: "text.secondary", border: 0 }}
-                >
-                  Waktu Selesai
-                </TableCell>
-                <TableCell
-                  align="center"
-                  sx={{ fontWeight: "600", color: "text.secondary", border: 0 }}
-                >
-                  Aksi
-                </TableCell>
+                <TableCell sx={{ fontWeight: "600", color: "text.secondary", border: 0 }}>Nama Guru</TableCell>
+                <TableCell sx={{ fontWeight: "600", color: "text.secondary", border: 0 }}>Mata Pelajaran</TableCell>
+                <TableCell sx={{ fontWeight: "600", color: "text.secondary", border: 0 }}>Waktu Mulai</TableCell>
+                <TableCell sx={{ fontWeight: "600", color: "text.secondary", border: 0 }}>Waktu Selesai</TableCell>
+                <TableCell align="center" sx={{ fontWeight: "600", color: "text.secondary", border: 0 }}>Aksi</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -304,34 +238,20 @@ const formatWIBTime = (waktu) => {
                 jadwal.map((item) => (
                   <TableRow key={item.id} hover>
                     <TableCell>
-                      <Typography variant="body1" sx={{ fontWeight: "600" }}>
-                        {item.nama_guru}
-                      </Typography>
+                      <Typography variant="body1" sx={{ fontWeight: "600" }}>{item.nama_guru}</Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" color="text.secondary">
-                        {item.mata_pelajaran}
-                      </Typography>
+                      <Typography variant="body2" color="text.secondary">{item.mata_pelajaran}</Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" color="text.secondary">
-                        {formatWIBTime(item.waktu_mulai)}
-                      </Typography>
+                      <Typography variant="body2" color="text.secondary">{formatWIBTime(item.waktu_mulai)}</Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" color="text.secondary">
-                        {new Date(item.waktu_selesai).toLocaleString("id-ID", {
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                        })}
-                      </Typography>
+                      <Typography variant="body2" color="text.secondary">{formatWIBTime(item.waktu_selesai)}</Typography>
                     </TableCell>
                     <TableCell align="center">
                       <Tooltip title="Hapus Jadwal">
-                        <IconButton
-                          size="small"
-                          onClick={() => handleDelete(item.id)}
-                        >
+                        <IconButton size="small" onClick={() => handleDelete(item.id)}>
                           <DeleteIcon color="error" />
                         </IconButton>
                       </Tooltip>
