@@ -4,6 +4,7 @@ import { useReactToPrint } from "react-to-print";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import dayjs from "dayjs";
+import html2pdf from "html2pdf.js";
 
 // MUI Components
 import {
@@ -41,60 +42,62 @@ const formatTimeManual = (waktu) => {
 
 
 // Komponen khusus untuk dicetak
-const ComponentToPrint = React.forwardRef(({ laporan, filter }, ref) => (
-  <div ref={ref} style={{ padding: "20px" }}>
-    <Typography variant="h5" align="center" gutterBottom>
-      Laporan Presensi Guru
-    </Typography>
-    <Typography variant="subtitle1" align="center" gutterBottom>
-      {filter}
-    </Typography>
-    <TableContainer component={Paper} elevation={1}>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell sx={{ fontWeight: "bold" }}>Nama Guru</TableCell>
-            <TableCell sx={{ fontWeight: "bold" }}>Tanggal</TableCell>
-            {/* ✅ FIX: Menambahkan kolom Waktu Masuk dan Pulang */}
-            <TableCell sx={{ fontWeight: "bold" }}>Waktu Masuk</TableCell>
-            <TableCell sx={{ fontWeight: "bold" }}>Waktu Pulang</TableCell>
-            <TableCell align="center" sx={{ fontWeight: "bold" }}>
-              Status
-            </TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {laporan.length > 0 ? (
-            laporan.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>{item.nama_guru}</TableCell>
-                <TableCell>
-                  {new Date(item.tanggal).toLocaleDateString("id-ID", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </TableCell>
-                {/* ✅ FIX: Menampilkan waktu masuk dan pulang */}
-                <TableCell>{formatTimeManual(item.waktu_masuk)}</TableCell>
-                <TableCell>{formatTimeManual(item.waktu_pulang)}</TableCell>
-                <TableCell align="center" sx={{ textTransform: "capitalize" }}>
-                  {item.status}
-                </TableCell>
-              </TableRow>
-            ))
-          ) : (
+const ComponentToPrint = React.forwardRef(function ComponentToPrint({ laporan, filter }, ref) {
+  return (
+    <div ref={ref} style={{ padding: "20px" }}>
+      <Typography variant="h5" align="center" gutterBottom>
+        Laporan Presensi Guru
+      </Typography>
+      <Typography variant="subtitle1" align="center" gutterBottom>
+        {filter}
+      </Typography>
+      <TableContainer component={Paper} elevation={1}>
+        <Table>
+          <TableHead>
             <TableRow>
-              <TableCell colSpan={5} align="center">
-                Tidak ada data.
+              <TableCell sx={{ fontWeight: "bold" }}>Nama Guru</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Tanggal</TableCell>
+              {/* ✅ FIX: Menambahkan kolom Waktu Masuk dan Pulang */}
+              <TableCell sx={{ fontWeight: "bold" }}>Waktu Masuk</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Waktu Pulang</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold" }}>
+                Status
               </TableCell>
             </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  </div>
-));
+          </TableHead>
+          <TableBody>
+            {laporan.length > 0 ? (
+              laporan.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>{item.nama_guru}</TableCell>
+                  <TableCell>
+                    {new Date(item.tanggal).toLocaleDateString("id-ID", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </TableCell>
+                  {/* ✅ FIX: Menampilkan waktu masuk dan pulang */}
+                  <TableCell>{formatTimeManual(item.waktu_masuk)}</TableCell>
+                  <TableCell>{formatTimeManual(item.waktu_pulang)}</TableCell>
+                  <TableCell align="center" sx={{ textTransform: "capitalize" }}>
+                    {item.status}
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={5} align="center">
+                  Tidak ada data.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </div>
+  );
+});
 
 function LaporanPresensi() {
   const [laporan, setLaporan] = useState([]);
@@ -104,6 +107,7 @@ function LaporanPresensi() {
   const [error, setError] = useState("");
   const token = localStorage.getItem("token");
   const componentRef = useRef();
+  const printAreaRef = useRef();
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -198,6 +202,11 @@ function LaporanPresensi() {
     return guru ? guru.nama : "";
   };
 
+  const handlePrintPDF = () => {
+    if (!printAreaRef.current) return;
+    html2pdf().from(printAreaRef.current).save(`Laporan_Presensi_${Date.now()}.pdf`);
+  };
+
   return (
     <Box>
       <Box
@@ -237,6 +246,15 @@ function LaporanPresensi() {
           </FormControl>
           <Button
             variant="outlined"
+            startIcon={<PrintIcon />}
+            onClick={handlePrintPDF}
+            disabled={loading || laporan.length === 0}
+            sx={{ whiteSpace: "nowrap" }}
+          >
+            Cetak PDF
+          </Button>
+          <Button
+            variant="outlined"
             startIcon={<DownloadIcon />}
             onClick={exportToExcel}
             disabled={loading || laporan.length === 0}
@@ -252,12 +270,11 @@ function LaporanPresensi() {
         </Alert>
       )}
 
-      <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
-        <ComponentToPrint
-          ref={componentRef}
-          laporan={laporan}
-          filter={getFilterText()}
-        />
+      {/* Ref langsung diberikan ke komponen hasil React.forwardRef, tanpa cloneElement */}
+      <div style={{ display: "none" }}>
+        <div ref={printAreaRef}>
+          <ComponentToPrint laporan={laporan} filter={getFilterText()} />
+        </div>
       </div>
 
       <Card
