@@ -11,5 +11,15 @@
       "src": "/(.*)",
       "dest": "index.js"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/check-all-notifications",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/reset-daily-flags",
+      "schedule": "1 0 * * *"
+    }
   ]
 }
