@@ -1,4 +1,4 @@
-// Simpan file ini sebagai: /api/cron/check-all-notifications.js
+// Lokasi file: /backend/api/cron/check-all-notifications.js
 
 const db = require('../../db'); // Pastikan path ini benar!
 const {
@@ -7,55 +7,33 @@ const {
     sendDailyAbsenceReminderEmail
 } = require('../../services/notificationService'); // Pastikan path ini benar!
 
+// Fungsi ini akan dijalankan oleh Vercel setiap menit
 export default async function handler(request, response) {
-    console.log("--- CRON JOB HANDLER STARTED ---");
+    console.log("--- VERCEL CRON JOB: HANDLER STARTED ---");
 
-    // 1. Cek Keamanan
-    const cronSecret = process.env.CRON_SECRET;
-    if (!cronSecret) {
-        console.error("FATAL ERROR: Environment variable CRON_SECRET tidak ditemukan!");
-        return response.status(500).json({ message: "Server configuration error: CRON_SECRET is not set." });
-    }
-
-    const authHeader = request.headers.authorization;
-    if (authHeader !== `Bearer ${cronSecret}`) {
-        console.warn(`Unauthorized attempt. Header: ${authHeader}`);
+    // Keamanan: Pastikan hanya Vercel yang bisa memanggil ini
+    if (request.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
+        console.warn("Unauthorized cron attempt.");
         return response.status(401).json({ message: 'Unauthorized' });
     }
     console.log("Authorization check passed.");
 
-    // 2. Jalankan Tugas-tugas
     try {
-        await runTask(checkScheduleReminders, 'Schedule Reminders');
-        await runTask(checkScheduleWarnings, 'Schedule Absence Warnings');
-        await runTask(checkDailyReminders, 'Daily General Reminders');
-
-        console.log("--- CRON JOB HANDLER FINISHED SUCCESSFULLY ---");
+        await checkScheduleReminders();
+        await checkScheduleWarnings();
+        await checkDailyReminders();
+        console.log("--- VERCEL CRON JOB: ALL TASKS COMPLETED ---");
         return response.status(200).json({ status: 'OK' });
-
     } catch (error) {
-        console.error("[HANDLER_CATCH_ALL] An unexpected error occurred in the handler:", error);
-        return response.status(500).json({ status: 'Handler Failed', message: error.message });
+        console.error("[VERCEL CRON ERROR] An error occurred:", error);
+        return response.status(500).json({ status: 'Failed', message: error.message });
     }
 }
 
-// Helper function untuk menjalankan dan me-log setiap tugas
-async function runTask(taskFunction, taskName) {
-    console.log(`[TASK START] Running: ${taskName}`);
-    try {
-        await taskFunction();
-        console.log(`[TASK SUCCESS] Finished: ${taskName}`);
-    } catch (error) {
-        console.error(`[TASK FAILED] Error in ${taskName}:`, error);
-        // Melempar error lagi agar bisa ditangkap oleh handler utama jika perlu
-        throw error; 
-    }
-}
-
-
-// --- Logika dari setiap cron job yang lama dipindahkan ke fungsi terpisah ---
+// --- Fungsi-fungsi pembantu ---
 
 async function checkScheduleReminders() {
+    console.log("[TASK] Running: Schedule Reminders...");
     const nowInJakarta = "(NOW() AT TIME ZONE 'Asia/Jakarta')";
     const oneHourFromNow = `(${nowInJakarta} + interval '60 minutes')`;
     const sql = `SELECT j.id, j.mata_pelajaran, j.waktu_mulai, g.email, g.nama FROM jadwal j JOIN guru g ON j.guru_id = g.id WHERE j.waktu_mulai BETWEEN ${nowInJakarta} AND ${oneHourFromNow} AND j.notifikasi_terkirim = false`;
@@ -68,6 +46,7 @@ async function checkScheduleReminders() {
 }
 
 async function checkScheduleWarnings() {
+    console.log("[TASK] Running: Schedule Absence Warnings...");
     const today = "(NOW() AT TIME ZONE 'Asia/Jakarta')::DATE";
     const nowInJakarta = "(NOW() AT TIME ZONE 'Asia/Jakarta')";
     const sql = `SELECT j.id, j.mata_pelajaran, j.guru_id, g.email, g.nama FROM jadwal j JOIN guru g ON j.guru_id = g.id WHERE DATE(j.waktu_mulai AT TIME ZONE 'Asia/Jakarta') = ${today} AND j.waktu_mulai < ${nowInJakarta} AND j.peringatan_absen_terkirim = false`;
@@ -83,6 +62,7 @@ async function checkScheduleWarnings() {
 }
 
 async function checkDailyReminders() {
+    console.log("[TASK] Running: Daily General Reminders...");
     const today = "(NOW() AT TIME ZONE 'Asia/Jakarta')::DATE";
     const sql = `SELECT g.id, g.nama, g.email FROM guru g WHERE NOT EXISTS (SELECT 1 FROM absensi a WHERE a.guru_id = g.id AND a.tanggal = ${today}) AND g.notifikasi_harian_terkirim = false;`;
     const { rows: teachers } = await db.query(sql);
