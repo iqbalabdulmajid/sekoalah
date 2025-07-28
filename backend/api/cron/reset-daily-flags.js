@@ -1,12 +1,11 @@
-// File: /api/cron/reset-daily-flags.js
-const db = require('../../db'); // Sesuaikan path ke koneksi DB Anda
+const db = require('../../db'); // Sesuaikan path jika perlu
 
 export default async function handler(request, response) {
     if (request.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
         return response.status(401).end('Unauthorized');
     }
 
-    console.log('[CRON-RESET] Resetting daily notification flags for all teachers...');
+    console.log('[CRON-RESET] Resetting daily notification flags...');
     try {
         await db.query('UPDATE guru SET notifikasi_harian_terkirim = false');
         console.log('[CRON-RESET] Flags reset successfully.');

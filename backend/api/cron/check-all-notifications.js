@@ -1,11 +1,10 @@
-// Lokasi file: /backend/api/cron/check-all-notifications.js
-
-const db = require('../../db'); // Pastikan path ini benar!
+// Impor koneksi database dan fungsi-fungsi pengirim email
+const db = require('../../db'); // Sesuaikan path jika perlu
 const {
     sendScheduleReminderEmail,
     sendAbsenceWarningEmail,
     sendDailyAbsenceReminderEmail
-} = require('../../services/notificationService'); // Pastikan path ini benar!
+} = require('../../services/notificationService'); // Sesuaikan path jika perlu
 
 // Fungsi ini akan dijalankan oleh Vercel setiap menit
 export default async function handler(request, response) {
@@ -30,7 +29,7 @@ export default async function handler(request, response) {
     }
 }
 
-// --- Fungsi-fungsi pembantu ---
+// --- Fungsi-fungsi pembantu yang berisi logika cron ---
 
 async function checkScheduleReminders() {
     console.log("[TASK] Running: Schedule Reminders...");
@@ -38,7 +37,6 @@ async function checkScheduleReminders() {
     const oneHourFromNow = `(${nowInJakarta} + interval '60 minutes')`;
     const sql = `SELECT j.id, j.mata_pelajaran, j.waktu_mulai, g.email, g.nama FROM jadwal j JOIN guru g ON j.guru_id = g.id WHERE j.waktu_mulai BETWEEN ${nowInJakarta} AND ${oneHourFromNow} AND j.notifikasi_terkirim = false`;
     const { rows } = await db.query(sql);
-    if (rows.length > 0) console.log(`  - Found ${rows.length} schedules to remind.`);
     for (const schedule of rows) {
         if (schedule.email) await sendScheduleReminderEmail(schedule.email, schedule);
         await db.query('UPDATE jadwal SET notifikasi_terkirim = true WHERE id = $1', [schedule.id]);
@@ -51,7 +49,6 @@ async function checkScheduleWarnings() {
     const nowInJakarta = "(NOW() AT TIME ZONE 'Asia/Jakarta')";
     const sql = `SELECT j.id, j.mata_pelajaran, j.guru_id, g.email, g.nama FROM jadwal j JOIN guru g ON j.guru_id = g.id WHERE DATE(j.waktu_mulai AT TIME ZONE 'Asia/Jakarta') = ${today} AND j.waktu_mulai < ${nowInJakarta} AND j.peringatan_absen_terkirim = false`;
     const { rows: schedules } = await db.query(sql);
-    if (schedules.length > 0) console.log(`  - Found ${schedules.length} overdue schedules to check.`);
     for (const schedule of schedules) {
       const { rows: absenceRows } = await db.query(`SELECT id FROM absensi WHERE guru_id = $1 AND tanggal = ${today}`, [schedule.guru_id]);
       if (absenceRows.length === 0 && schedule.email) {
@@ -66,7 +63,6 @@ async function checkDailyReminders() {
     const today = "(NOW() AT TIME ZONE 'Asia/Jakarta')::DATE";
     const sql = `SELECT g.id, g.nama, g.email FROM guru g WHERE NOT EXISTS (SELECT 1 FROM absensi a WHERE a.guru_id = g.id AND a.tanggal = ${today}) AND g.notifikasi_harian_terkirim = false;`;
     const { rows: teachers } = await db.query(sql);
-    if (teachers.length > 0) console.log(`  - Found ${teachers.length} teachers for daily reminder.`);
     for (const teacher of teachers) {
         if (teacher.email) {
             await sendDailyAbsenceReminderEmail(teacher.email, teacher);
