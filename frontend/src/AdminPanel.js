@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 // Import komponen-komponen dari MUI
 import { 
@@ -34,6 +35,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import AddIcon from '@mui/icons-material/Add';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 
 // Komponen Form terpisah di dalam file yang sama untuk kerapian
 function UserForm({ open, onClose, onSuccess, userToEdit }) {
@@ -152,6 +154,7 @@ function UserForm({ open, onClose, onSuccess, userToEdit }) {
 
 
 function AdminPanel() {
+  const navigate = useNavigate();
   const [gurus, setGurus] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -364,6 +367,11 @@ function AdminPanel() {
                         <Tooltip title="Generate QR Code">
                           <IconButton size="small" onClick={() => handleGenerateQr(guru)}>
                             <QrCode2Icon color="info" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Lihat Laporan">
+                          <IconButton size="small" onClick={() => navigate(`/laporan/${guru.id}`)}>
+                            <AssignmentIcon color="success" />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Edit Guru">

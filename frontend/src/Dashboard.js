@@ -3,6 +3,7 @@ import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import { Html5Qrcode, Html5QrcodeScanner } from "html5-qrcode";
 import dayjs from "dayjs";
+import MateriInputForm from './MateriInputForm';
 // Import komponen-komponen MUI
 import {
   AppBar,
@@ -225,7 +226,7 @@ const UserProfileCard = ({ user, currentTime }) => (
   </ModernCard>
 );
 
-const PresenceCard = ({ status, onOpenModal, loading }) => {
+const PresenceCard = ({ status, onOpenModal, loading, onOpenInputMateri }) => {
   const formatTime = (isoString) => {
     if (!isoString) return "";
     // Ambil karakter dari indeks 11 sampai 16 (contoh: "13:06")
@@ -322,6 +323,17 @@ const PresenceCard = ({ status, onOpenModal, loading }) => {
             Pulang
           </Button>
         </Stack>
+        {/* Tombol Input Laporan Materi */}
+        <Button
+          variant="contained"
+          color="secondary"
+          fullWidth
+          sx={{ mt: 2, borderRadius: 2 }}
+          onClick={onOpenInputMateri}
+          disabled={!onOpenInputMateri || !status?.waktu_masuk || !status?.id}
+        >
+          Input Laporan Materi
+        </Button>
       </CardContent>
     </Box>
   );
@@ -742,6 +754,7 @@ function Dashboard() {
     message: "",
   });
   const [notifiedJadwalIds, setNotifiedJadwalIds] = useState([]);
+  const [showMateriForm, setShowMateriForm] = useState(false);
 
   const token = localStorage.getItem("token");
   const formatTimeManual = (waktu) => {
@@ -1083,6 +1096,7 @@ function Dashboard() {
                 status={presenceStatus}
                 loading={loading}
                 onOpenModal={() => setIsModalOpen(true)}
+                onOpenInputMateri={() => setShowMateriForm(true)}
               />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
@@ -1220,6 +1234,29 @@ function Dashboard() {
           </Container>
         </Stack>
       </Container>
+
+      {/* Form Input Materi */}
+      {showMateriForm && (
+        <Dialog open={showMateriForm} onClose={() => setShowMateriForm(false)} maxWidth="md" fullWidth>
+          <DialogTitle>
+            Input Laporan Materi
+            <IconButton
+              onClick={() => setShowMateriForm(false)}
+              sx={{ position: 'absolute', right: 8, top: 8 }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            <MateriInputForm 
+              absensiId={presenceStatus?.id}
+              guruId={user?.id}
+              tanggal={new Date().toISOString().split('T')[0]}
+              onSuccess={() => setShowMateriForm(false)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* --- Modal untuk Pindai QR --- */}
       <QrScannerModal

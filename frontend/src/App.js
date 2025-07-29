@@ -15,6 +15,7 @@ import LoginPage from './LoginPage';
 import AdminPanel from './AdminPanel';
 import ManajemenJadwal from './ManajemenJadwal';
 import LaporanPresensi from './LaporanPresensi';
+import LaporanMengajar from './LaporanMengajar';
 
 import './App.css';
 
@@ -60,6 +61,7 @@ function App() {
           <Route index element={<AdminPanel />} /> 
           <Route path="jadwal" element={<ManajemenJadwal />} />
           <Route path="laporan" element={<LaporanPresensi />} />
+          <Route path="laporan-guru" element={<LaporanMengajar />} />
         </Route>
       </Routes>
     </Router>

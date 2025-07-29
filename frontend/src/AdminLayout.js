@@ -9,6 +9,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import EventIcon from '@mui/icons-material/Event';
 import AssessmentIcon from '@mui/icons-material/Assessment';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 
 const drawerWidth = 240;
 
@@ -47,6 +48,7 @@ function AdminLayout(props) {
     { text: 'Manajemen Guru', icon: <PeopleIcon />, path: '/admin' },
     { text: 'Manajemen Jadwal', icon: <EventIcon />, path: '/admin/jadwal' },
     { text: 'Laporan Presensi', icon: <AssessmentIcon />, path: '/admin/laporan' },
+    { text: 'Laporan Mengajar', icon: <AssignmentIcon />, path: '/admin/laporan-guru' }
   ];
 
   const drawer = (
