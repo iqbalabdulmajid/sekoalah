@@ -1,11 +1,13 @@
 {
   "version": 2,
-  "functions": {
-    "api/cron/check-all-notifications.js": {
+  "crons": [
+    {
+      "path": "/api/cron/check-all-notifications",
       "schedule": "* * * * *"
     },
-    "api/cron/reset-daily-flags.js": {
+    {
+      "path": "/api/cron/reset-daily-flags",
       "schedule": "1 0 * * *"
     }
-  }
+  ]
 }
