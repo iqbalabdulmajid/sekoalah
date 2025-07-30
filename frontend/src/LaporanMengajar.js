@@ -23,6 +23,8 @@ function LaporanMengajar() {
   const [laporan, setLaporan] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
 
   useEffect(() => {
     fetchLaporan();
@@ -135,14 +137,27 @@ function LaporanMengajar() {
                     <TableCell>{item.laporan?.["0"]?.kelas || "-"}</TableCell>
                     <TableCell>{item.laporan?.["0"]?.materi || "-"}</TableCell>
 
-                    const baseUrl = "http://localhost:5000"; // ganti sesuai port backend kamu
+                    <TableCell>
+                      {item.laporan.materiFile ? (
+                        <Tooltip title="Download Materi">
+                          <IconButton
+                            size="small"
+                            onClick={() =>
+                               handleDownloadMateri(`${API_URL}${item.laporan.materiFile.url}`)
 
-const handleDownloadMateri = (filePath) => {
-  const filename = filePath.split('\\').pop(); // ambil nama file dari path lokal
-  const url = `${baseUrl}/uploads/materi/${filename}`;
-  window.open(url, "_blank");
-};
-
+                            }
+                          >
+                            <PictureAsPdfIcon color="primary" />
+                          </IconButton>
+                        </Tooltip>
+                      ) : (
+                        <Chip
+                          label="Tidak ada lampiran"
+                          size="small"
+                          variant="outlined"
+                        />
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))
               )}

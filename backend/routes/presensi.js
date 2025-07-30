@@ -249,7 +249,7 @@ router.post('/laporan', protect, upload.single('materiFile'), async (req, res) =
                 ...laporanData,
                 materiFile: {
                     filename: req.file.filename,
-                    path: req.file.path,
+                     url: `/uploads/materi/${req.file.filename}`, // <-- gunakan ini
                     originalName: req.file.originalname
                 }
             };

@@ -3,6 +3,8 @@ require('dotenv').config(); // Harus paling atas
 const express = require('express');
 const cors = require('cors');
 const db = require('./db'); // Impor untuk cek koneksi saat start
+const path = require('path');
+
 
 // 1. Impor semua rute
 const userRoutes = require('./routes/gurus');
@@ -33,6 +35,8 @@ app.use('/api/laporan', laporanRoutes);
 app.get('/', (req, res) => {
   res.send('Selamat datang di API Sistem Presensi!');
 });
+app.use('/uploads/materi', express.static(path.join(__dirname, 'uploads', 'materi')));
+
 
 // Jalankan server
 app.listen(port, () => {
