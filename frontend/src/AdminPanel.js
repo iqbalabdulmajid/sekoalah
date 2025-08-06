@@ -369,11 +369,11 @@ function AdminPanel() {
                             <QrCode2Icon color="info" />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title="Lihat Laporan">
+                        {/* <Tooltip title="Lihat Laporan">
                           <IconButton size="small" onClick={() => navigate(`/laporan/${guru.id}`)}>
                             <AssignmentIcon color="success" />
                           </IconButton>
-                        </Tooltip>
+                        </Tooltip> */}
                         <Tooltip title="Edit Guru">
                           <IconButton size="small" onClick={() => handleOpenForm(guru)}>
                             <EditIcon color="warning" />
