@@ -49,8 +49,9 @@ const MateriInputForm = ({
     setLoading(true);
     setError("");
     setSuccess("");
-    const laporan = materiList.filter((m) => m.kelas && m.materi);
-    if (laporan.length === 0) {
+
+    const materiFiltered = materiList.filter((m) => m.kelas && m.materi);
+    if (materiFiltered.length === 0) {
       setError("Isi minimal satu materi dan kelas.");
       setLoading(false);
       return;
@@ -58,18 +59,29 @@ const MateriInputForm = ({
 
     try {
       const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
-
-      // Buat FormData untuk mengirim file dan data
       const formData = new FormData();
+
       formData.append("guru_id", guruId);
       formData.append("absensi_id", absensiId);
       formData.append("tanggal", tanggal);
-      formData.append("laporan", JSON.stringify(laporan));
+
+      // 🔁 Ubah array menjadi object
+      const laporanObject = {};
+      materiFiltered.forEach((item, index) => {
+        laporanObject[index] = item;
+      });
+
+      formData.append("laporan", JSON.stringify(laporanObject));
 
       // Tambahkan file jika ada
       const fileInput = document.getElementById("materi-file-upload");
       const file = fileInput.files?.[0];
       if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+          setError("Ukuran file tidak boleh lebih dari 5MB");
+          setLoading(false);
+          return;
+        }
         formData.append("materiFile", file);
       }
 
@@ -79,6 +91,7 @@ const MateriInputForm = ({
           "Content-Type": "multipart/form-data",
         },
       });
+
       setSuccess("Laporan materi berhasil disimpan!");
       setMateriList([{ kelas: "", materi: "" }]);
       if (onSuccess) onSuccess();
@@ -96,16 +109,8 @@ const MateriInputForm = ({
       <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" }}>
         Input Laporan Materi Mengajar Hari Ini
       </Typography>
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-      {success && (
-        <Alert severity="success" sx={{ mb: 2 }}>
-          {success}
-        </Alert>
-      )}
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
       <form onSubmit={handleSubmit} encType="multipart/form-data">
         <Box sx={{ mb: 3 }}>
           <input
@@ -113,13 +118,6 @@ const MateriInputForm = ({
             type="file"
             id="materi-file-upload"
             style={{ display: "none" }}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file && file.size > 5 * 1024 * 1024) {
-                setError("Ukuran file tidak boleh lebih dari 5MB");
-                e.target.value = "";
-              }
-            }}
           />
           <label htmlFor="materi-file-upload">
             <Button
@@ -152,26 +150,11 @@ const MateriInputForm = ({
                             {kls}
                           </MenuItem>
                         ))
-                      : [
-                          <MenuItem key="1" value="1">
-                            1
-                          </MenuItem>,
-                          <MenuItem key="2" value="2">
-                            2
-                          </MenuItem>,
-                          <MenuItem key="3" value="3">
-                            3
-                          </MenuItem>,
-                          <MenuItem key="4" value="4">
-                            4
-                          </MenuItem>,
-                          <MenuItem key="5" value="5">
-                            5
-                          </MenuItem>,
-                          <MenuItem key="6" value="6">
-                            6
-                          </MenuItem>,
-                        ]}
+                      : [1, 2, 3, 4, 5, 6].map((num) => (
+                          <MenuItem key={num} value={num.toString()}>
+                            {num}
+                          </MenuItem>
+                        ))}
                   </Select>
                 </FormControl>
               </Grid>
@@ -179,7 +162,9 @@ const MateriInputForm = ({
                 <TextField
                   label="Materi yang Diajarkan"
                   value={item.materi}
-                  onChange={(e) => handleChange(idx, "materi", e.target.value)}
+                  onChange={(e) =>
+                    handleChange(idx, "materi", e.target.value)
+                  }
                   fullWidth
                   required
                 />

@@ -143,7 +143,7 @@ function LaporanMengajar() {
                             size="small"
                             onClick={() =>
                               handleDownloadMateri(
-                                `${API_URL}${item.laporan.materiFile.url}`
+                                `${item.laporan.materiFile.url}`
                               )
                             }
                           >
