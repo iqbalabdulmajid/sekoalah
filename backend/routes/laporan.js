@@ -119,4 +119,29 @@ router.post('/mengajar', protect, async (req, res) => {
     }
 });
 
+router.get('/mengajar', protect, async (req, res) => {
+  try {
+    // Contoh query untuk mengambil data aktivitas mengajar
+    // Anda perlu menyesuaikan ini dengan struktur tabel Anda
+    const sql = `
+      SELECT 
+        g.nama as nama_guru, 
+        j.mata_pelajaran, 
+        a.waktu_mulai_mengajar, -- Asumsi ada kolom ini
+        a.waktu_selesai_mengajar -- Asumsi ada kolom ini
+      FROM aktivitas_mengajar a -- Asumsi ada tabel ini
+      JOIN guru g ON a.guru_id = g.id
+      JOIN jadwal j ON a.jadwal_id = j.id
+      ORDER BY a.waktu_mulai_mengajar DESC
+    `;
+    
+    const { rows } = await db.query(sql);
+    res.status(200).json(rows);
+
+  } catch (err) {
+    console.error("Error mengambil laporan mengajar:", err);
+    res.status(500).json({ error: "Gagal mengambil data laporan mengajar." });
+  }
+});
+
 module.exports = router;
