@@ -25,7 +25,6 @@ function LaporanMengajar() {
   const [error, setError] = useState("");
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
-
   useEffect(() => {
     fetchLaporan();
   }, []);
@@ -143,8 +142,9 @@ function LaporanMengajar() {
                           <IconButton
                             size="small"
                             onClick={() =>
-                               handleDownloadMateri(`${API_URL}${item.laporan.materiFile.url}`)
-
+                              handleDownloadMateri(
+                                `${API_URL}${item.laporan.materiFile.url}`
+                              )
                             }
                           >
                             <PictureAsPdfIcon color="primary" />
