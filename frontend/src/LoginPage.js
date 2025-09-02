@@ -93,6 +93,14 @@ function LoginPage() {
           >
             Login
           </Button>
+          <Button
+            fullWidth
+            variant="outlined"
+            sx={{ mt: 2 }}
+            onClick={() => navigate("/lupa-password")}
+          >
+            Lupa Password?
+          </Button>
         </Box>
       </Paper>
     </Container>

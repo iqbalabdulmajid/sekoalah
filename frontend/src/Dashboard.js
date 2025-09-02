@@ -272,7 +272,7 @@ const PresenceCard = ({ status, onOpenModal, loading, onOpenInputMateri }) => {
     }
 
     return {
-      title: "Presensi Kehadiran",
+      title: "Presensi Kehadiran Dapat Dilakukan Saat Masuk Pukul 08.00 dan Pulang Pukul 15.00",
       description: "Anda belum melakukan absensi masuk hari ini.",
     };
   };

@@ -1,64 +1,73 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 
 // Impor komponen penjaga
-import ProtectedRoute from './ProtectedRoute';
-import AdminRoute from './AdminRoute';
+import ProtectedRoute from "./ProtectedRoute";
+import AdminRoute from "./AdminRoute";
 
 // Impor Layouts
-import AdminLayout from './AdminLayout';
+import AdminLayout from "./AdminLayout";
 
 // Impor Halaman
-import Home from './Home';
-import Dashboard from './Dashboard';
-import LoginPage from './LoginPage';
-import AdminPanel from './AdminPanel';
-import ManajemenJadwal from './ManajemenJadwal';
-import LaporanPresensi from './LaporanPresensi';
-import LaporanMengajar from './LaporanMengajar';
+import Home from "./Home";
+import Dashboard from "./Dashboard";
+import LoginPage from "./LoginPage";
+import AdminPanel from "./AdminPanel";
+import ManajemenJadwal from "./ManajemenJadwal";
+import LaporanPresensi from "./LaporanPresensi";
+import LaporanMengajar from "./LaporanMengajar";
+import { LupaPasswordPage, UpdatePasswordPage } from './PasswordReset';
 
-import './App.css';
+
+import "./App.css";
 
 function App() {
   return (
     <Router>
       <Routes>
+        <Route path="/lupa-password" element={<LupaPasswordPage />} />
+        <Route path="/update-password" element={<UpdatePasswordPage />} />
         {/* Rute Publik */}
         <Route path="/login" element={<LoginPage />} />
         {/* Mengarahkan halaman root ke /home */}
         <Route path="/" element={<Navigate to="/home" replace />} />
 
         {/* Rute "Penengah" setelah login */}
-        <Route 
-          path="/home" 
+        <Route
+          path="/home"
           element={
             <ProtectedRoute>
               <Home />
             </ProtectedRoute>
-          } 
+          }
         />
-        
+
         {/* Rute Dasbor khusus untuk Guru */}
-        <Route 
-          path="/dashboard" 
+        <Route
+          path="/dashboard"
           element={
             <ProtectedRoute>
               <Dashboard />
             </ProtectedRoute>
-          } 
+          }
         />
 
         {/* Rute khusus untuk Admin dengan Layout terpusat */}
-        <Route 
-          path="/admin" 
+        <Route
+          path="/admin"
           element={
             <AdminRoute>
               <AdminLayout />
             </AdminRoute>
-          } 
+          }
         >
           {/* Halaman default untuk /admin */}
-          <Route index element={<AdminPanel />} /> 
+          <Route index element={<AdminPanel />} />
           <Route path="jadwal" element={<ManajemenJadwal />} />
           <Route path="laporan" element={<LaporanPresensi />} />
           <Route path="laporan-guru" element={<LaporanMengajar />} />
